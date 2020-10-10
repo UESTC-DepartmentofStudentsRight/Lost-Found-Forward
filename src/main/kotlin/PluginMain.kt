@@ -1,5 +1,6 @@
 package org.Reforward.mirai.plugin
 
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
@@ -36,11 +37,12 @@ object PluginMain : KotlinPlugin(
     private fun send(group : Group, messagechain : MessageChain, bot : Bot) {
         val groups = Mydata.groups
         for (id : Long in groups) {
-
+            launch { bot.getGroups(id), sendMessage(messagechain) }
         }
     }
 }
 
 object Mydata : AutoSavePluginConfig("Groups") {
     val groups: Array<Long> by value(emptyArray<Long>())
+    val sendlist : Array<>
 }
