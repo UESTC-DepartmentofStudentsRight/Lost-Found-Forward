@@ -1,27 +1,25 @@
-package org.Reforward.mirai.plugin
+package org.example.mirai.plugin
 
-import net.mamoe.mirai.console.extension.PluginComponentStorage
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
+import net.mamoe.mirai.console.data.AutoSavePluginConfig
+import net.mamoe.mirai.console.data.value
+import org.jetbrains.kotlinx.serialization.compiler.backend.jvm.ARRAY
 
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
-        id = "org.Reforward.mirai.plugin",
-        version = "0.0.1"
+        id = "org.example.mirai-plugin",
+        version = "0.1.0"
     )
 ) {
-
     override fun onEnable() {
-        logger.info { "Welcome to 权益小窝‘s 转发插件" }
+        logger.info { "Writen by QYXW " }
     }
+}
 
-    override fun onLoad() {
-        super.onLoad()
-        TODO("Not yet implemented")
-    }
+object Mydata : AutoSavePluginConfig("Empty") {
+    val groups: Array<String> by value(emptyArray<String>())
 
-    override fun onDisable() {
-        super.onDisable()
-    }
+
 }
