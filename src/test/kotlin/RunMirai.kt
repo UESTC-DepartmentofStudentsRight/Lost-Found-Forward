@@ -1,5 +1,3 @@
-package org.example.mirai.plugin
-
 import net.mamoe.mirai.alsoLogin
 import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.plugin.PluginManager.INSTANCE.enable
@@ -8,7 +6,7 @@ import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import org.Reforward.mirai.plugin.*
+import org.Reforward.mirai.plugin.PluginMain
 
 suspend fun main() {
     MiraiConsoleTerminalLoader.startAsDaemon()
