@@ -6,7 +6,9 @@ package org.Reforward.mirai.plugin
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
-import net.mamoe.mirai.console.command.Command
+import net.mamoe.mirai.console.command.*
+import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
+import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
@@ -23,7 +25,7 @@ import net.mamoe.mirai.contact.Group
 import org.jetbrains.kotlinx.serialization.compiler.backend.jvm.ARRAY
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.uploadAsImage
-import org.graalvm.compiler.nodes.calc.AddNode
+
 
 val PluginID = "org.Reforward.mirai-plugin"
 val PluginVersion = "0.0.1"
