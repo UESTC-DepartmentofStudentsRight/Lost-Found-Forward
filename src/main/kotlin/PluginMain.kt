@@ -3,10 +3,8 @@
 package org.Reforward.mirai.plugin
 
 
-import com.google.auto.service.AutoService
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
-import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.command.CommandSender
@@ -17,20 +15,14 @@ import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.event.subscribeGroupMessages
-import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
-import net.mamoe.mirai.message.data.sendTo
-import net.mamoe.mirai.contact.Contact
-import net.mamoe.mirai.contact.Group
-import org.jetbrains.kotlinx.serialization.compiler.backend.jvm.ARRAY
-import net.mamoe.mirai.message.data.*
-import net.mamoe.mirai.message.uploadAsImage
+import java.lang.Exception
+import kotlin.math.log
 
 
 val PluginID = "org.Reforward.mirai-plugin"
 val PluginVersion = "0.0.1"
 
-@AutoService(KotlinPlugin::class)
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = PluginID,
@@ -38,16 +30,16 @@ object PluginMain : KotlinPlugin(
     )
 ) {
     override fun onEnable() {
-        logger.info { "Writen by QYXW" }
+        logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Mydata.reload()
-        Addsenderid.register()
+        AddSenderId.register()
         AddGroupID.register()
     }
 
     override fun onDisable() {
         super.onDisable()
-        logger.error("Reforward Disable")
-        Addsenderid.unregister()
+        logger.error("插件卸载！")
+        AddSenderId.unregister()
         AddGroupID.unregister()
     }
 
@@ -55,7 +47,9 @@ object PluginMain : KotlinPlugin(
     private fun ForwardtheMsg() {
         subscribeGroupMessages {
             always {
-                if (group.id == Mydata.origingroup && sender.id in Mydata.senderid) {
+                val id: Long = group.id
+                val originGroup: Long = Mydata.originGroup
+                if (id == originGroup && sender.id in Mydata.senderid) {
                     send(message, bot)
                 }
             }
@@ -72,27 +66,37 @@ object PluginMain : KotlinPlugin(
 }
 
 object Mydata : AutoSavePluginConfig("Groups") {
-    var groups: MutableList<Long> by value(mutableListOf<Long>())
-    var senderid : MutableList<Long> by value(mutableListOf<Long>())
-    val origingroup : Long by value(445786154L)
+    var groups: MutableSet<Long> by value(mutableSetOf<Long>())
+    var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
+    val originGroup: Long by value(445786154L)
 }
 
-object Addsenderid : SimpleCommand(
-    PluginMain, "asi",
-    description = "添加允许转发的人的QQ号"
+object AddSenderId : SimpleCommand(
+    PluginMain, "addSender",
+    description = "添加允许转发的人的QQ号",
 ) {
     @Handler
-    suspend fun CommandSender.handle(id: Long){
-        Mydata.senderid.add(id)
+    suspend fun CommandSender.addSender(Id: Long) {
+        try {
+            Mydata.senderid.add(Id)
+        } catch (e: Exception) {
+            PluginMain.logger.error("添加允许转发人失败")
+        }
+        PluginMain.logger.info("添加转发人成功")
     }
 }
 
 object AddGroupID : SimpleCommand(
-    PluginMain, "agi",
-    description = "添加转发的群"
+    PluginMain, "AddGroup",
+    description = "添加转发的群",
 ) {
     @Handler
-    suspend fun CommandSender.handle(id: Long){
-        Mydata.groups.add(id)
+    suspend fun CommandSender.addGroup(Id: Long) {
+        try {
+            Mydata.groups.add(Id)
+        } catch (e: Exception) {
+            PluginMain.logger.error("添加转发群组失败")
+        }
+        PluginMain.logger.info("添加转发群组成功")
     }
 }
