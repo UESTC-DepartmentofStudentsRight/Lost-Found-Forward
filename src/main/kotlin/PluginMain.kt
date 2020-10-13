@@ -23,6 +23,7 @@ import net.mamoe.mirai.contact.Group
 import org.jetbrains.kotlinx.serialization.compiler.backend.jvm.ARRAY
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.uploadAsImage
+import org.graalvm.compiler.nodes.calc.AddNode
 
 val PluginID = "org.Reforward.mirai-plugin"
 val PluginVersion = "0.0.1"
@@ -37,11 +38,15 @@ object PluginMain : KotlinPlugin(
     override fun onEnable() {
         logger.info { "Writen by QYXW" }
         Mydata.reload()
+        Addsenderid.register()
+        AddGroupID.register()
     }
 
     override fun onDisable() {
         super.onDisable()
         logger.error("Reforward Disable")
+        Addsenderid.unregister()
+        AddGroupID.unregister()
     }
 
 
@@ -77,5 +82,15 @@ object Addsenderid : SimpleCommand(
     @Handler
     suspend fun CommandSender.handle(id: Long){
         Mydata.senderid.add(id)
+    }
+}
+
+object AddGroupID : SimpleCommand(
+    PluginMain, "agi",
+    description = "添加转发的群"
+) {
+    @Handler
+    suspend fun CommandSender.handle(id: Long){
+        Mydata.groups.add(id)
     }
 }
