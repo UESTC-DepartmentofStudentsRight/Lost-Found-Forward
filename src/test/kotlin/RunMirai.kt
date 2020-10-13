@@ -8,6 +8,7 @@ import net.mamoe.mirai.console.terminal.MiraiConsoleTerminalLoader
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
+import org.Reforward.mirai.plugin.*
 
 suspend fun main() {
     MiraiConsoleTerminalLoader.startAsDaemon()
