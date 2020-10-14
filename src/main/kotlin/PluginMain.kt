@@ -7,6 +7,8 @@ import com.google.auto.service.AutoService
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.Bot.Companion.getInstanceOrNull
+import net.mamoe.mirai.alsoLogin
+import net.mamoe.mirai.console.MiraiConsole
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.command.CommandSender
@@ -37,6 +39,7 @@ object PluginMain : KotlinPlugin(
         Mydata.reload()
         commandRegister()
         ForwardtheMsg()
+        autoLogin()
     }
 
     override fun onDisable() {
@@ -45,6 +48,14 @@ object PluginMain : KotlinPlugin(
         logger.error("插件卸载!")
     }
 
+
+    fun autoLogin() {
+        PluginMain.launch {
+            MiraiConsole.addBot(103833821, "qyxw0521") {
+                fileBasedDeviceInfo()
+            }.alsoLogin()
+        }
+    }
 
     private fun commandRegister() {
         AddSenderId.register()
