@@ -35,11 +35,13 @@ object PluginMain : KotlinPlugin(
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Mydata.reload()
+        commandRegister()
         ForwardtheMsg()
     }
 
     override fun onDisable() {
         super.onDisable()
+        commandUnregister()
         logger.error("插件卸载!")
     }
 
