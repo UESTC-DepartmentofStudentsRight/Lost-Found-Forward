@@ -34,6 +34,7 @@ object PluginMain : KotlinPlugin(
         Mydata.reload()
         AddSenderId.register()
         AddGroupID.register()
+        ForwardtheMsg()
     }
 
     override fun onDisable() {
@@ -47,9 +48,12 @@ object PluginMain : KotlinPlugin(
     private fun ForwardtheMsg() {
         subscribeGroupMessages {
             always {
+                PluginMain.logger.info("接收到了新的消息！")
                 val id: Long = group.id
                 val originGroup: Long = Mydata.originGroup
+                logger.info("id = ${id}, oringinGroup = ${originGroup}")
                 if (id == originGroup && sender.id in Mydata.senderid) {
+                    logger.info("准备发送")
                     send(message, bot)
                 }
             }
@@ -68,7 +72,7 @@ object PluginMain : KotlinPlugin(
 object Mydata : AutoSavePluginConfig("Groups") {
     var groups: MutableSet<Long> by value(mutableSetOf<Long>())
     var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
-    val originGroup: Long by value(445786154L)
+    var originGroup: Long by value(445786154L)
 }
 
 object AddSenderId : SimpleCommand(
@@ -77,12 +81,11 @@ object AddSenderId : SimpleCommand(
 ) {
     @Handler
     suspend fun CommandSender.addSender(Id: Long) {
-        try {
-            Mydata.senderid.add(Id)
-        } catch (e: Exception) {
-            PluginMain.logger.error("添加允许转发人失败")
+        if (!Mydata.senderid.add(Id)) {
+            PluginMain.logger.error("你已经添加过这名小窝了")
+        } else {
+            PluginMain.logger.info("添加小窝成功！")
         }
-        PluginMain.logger.info("添加转发人成功")
     }
 }
 
@@ -92,11 +95,10 @@ object AddGroupID : SimpleCommand(
 ) {
     @Handler
     suspend fun CommandSender.addGroup(Id: Long) {
-        try {
-            Mydata.groups.add(Id)
-        } catch (e: Exception) {
-            PluginMain.logger.error("添加转发群组失败")
+        if (!Mydata.groups.add(Id)) {
+            PluginMain.logger.error("你已经添加过这群了！")
+        } else {
+            PluginMain.logger.info("添加转发的群成功！")
         }
-        PluginMain.logger.info("添加转发群组成功")
     }
 }
