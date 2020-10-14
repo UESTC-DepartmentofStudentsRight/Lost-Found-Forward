@@ -22,7 +22,7 @@ import net.mamoe.mirai.message.data.*
 
 
 val PluginID = "org.Reforward.mirai-plugin"
-val PluginVersion = "0.0.1"
+val PluginVersion = "0.0.5"
 
 
 @AutoService(KotlinPlugin::class)
