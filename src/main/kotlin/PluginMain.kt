@@ -18,6 +18,7 @@ import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.message.data.*
@@ -34,6 +35,7 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
+    @ConsoleExperimentalApi
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Mydata.reload()
@@ -48,7 +50,7 @@ object PluginMain : KotlinPlugin(
         logger.error("插件卸载!")
     }
 
-
+    @ConsoleExperimentalApi
     fun autoLogin() {
         PluginMain.launch {
             MiraiConsole.addBot(103833821, "qyxw0521") {
@@ -67,6 +69,8 @@ object PluginMain : KotlinPlugin(
         ShowAllGroup.register()
         ShowAllSenderId.register()
         ChangeBotId.register()
+        ChangeOriginGroup.register()
+        ShowOriginGroup.register()
     }
 
     private fun commandUnregister() {
@@ -79,6 +83,8 @@ object PluginMain : KotlinPlugin(
         ShowAllGroup.unregister()
         ShowAllSenderId.unregister()
         ChangeBotId.unregister()
+        ChangeOriginGroup.unregister()
+        ShowOriginGroup.unregister()
     }
 
     private fun ForwardtheMsg() {
@@ -259,5 +265,26 @@ object ChangeBotId : SimpleCommand(
     fun CommandSender.ChgBotId(Id: Long) {
         Mydata.botId = Id
         PluginMain.logger.info("改变Bot的qq号为：${Id}")
+    }
+}
+
+object ChangeOriginGroup : SimpleCommand(
+    PluginMain, "ChangerOriginGroup",
+    description = "更改失物招领管理员群"
+) {
+    @Handler
+    fun CommandSender.ChgOGrp(Id: Long) {
+        Mydata.originGroup = Id
+        PluginMain.logger.info("已修改失物招领管理员群为: $Id")
+    }
+}
+
+object ShowOriginGroup : SimpleCommand(
+    PluginMain, "ShowOriginGroup",
+    description = "显示当前失物招领管理员群群号"
+) {
+    @Handler
+    fun CommandSender.ChgOGrp() {
+        PluginMain.logger.info("已修改失物招领管理员群为: ${Mydata.originGroup}")
     }
 }
