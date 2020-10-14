@@ -14,8 +14,10 @@ import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
+import net.mamoe.mirai.console.plugin.info
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.message.data.MessageChain
+import java.awt.color.CMMException
 import java.lang.Exception
 import kotlin.math.log
 
@@ -34,6 +36,8 @@ object PluginMain : KotlinPlugin(
         Mydata.reload()
         AddSenderId.register()
         AddGroupID.register()
+        DelAllSenderId.register()
+        DelSenderId.register()
         ForwardtheMsg()
     }
 
@@ -42,18 +46,20 @@ object PluginMain : KotlinPlugin(
         logger.error("插件卸载！")
         AddSenderId.unregister()
         AddGroupID.unregister()
+        DelAllSenderId.unregister()
+        DelSenderId.unregister()
     }
 
 
     private fun ForwardtheMsg() {
         subscribeGroupMessages {
             always {
-                PluginMain.logger.info("接收到了新的消息！")
+                //PluginMain.logger.info("接收到了新的消息！")
                 val id: Long = group.id
                 val originGroup: Long = Mydata.originGroup
                 logger.info("id = ${id}, oringinGroup = ${originGroup}")
                 if (id == originGroup && sender.id in Mydata.senderid) {
-                    logger.info("准备发送")
+                    //logger.info("准备发送")
                     send(message, bot)
                 }
             }
@@ -86,6 +92,46 @@ object AddSenderId : SimpleCommand(
         } else {
             PluginMain.logger.info("添加小窝成功！")
         }
+    }
+}
+
+object DelSenderId : SimpleCommand(
+    PluginMain, "DelSender",
+    description = "移除小窝的转发权限",
+) {
+    @Handler
+    suspend fun CommandSender.delSender(Id: Long) {
+        if (!Mydata.senderid.remove(Id)) {
+            PluginMain.logger.error("删除${bot?.getGroup(Mydata.originGroup)?.get(Id)}的小窝的权限失败")
+        } else {
+            PluginMain.logger.info("删除${bot?.getGroup(Mydata.originGroup)?.get(Id)}的小窝的权限小窝成功")
+        }
+    }
+}
+
+object DelAllSenderId : SimpleCommand(
+    PluginMain, "DelAllSender",
+    description = "移除所有小窝的转发权限",
+) {
+    @Handler
+    suspend fun CommandSender.DelAllSender() {
+        Mydata.senderid.clear()
+        PluginMain.logger.info("删除所有小窝的权限成功")
+    }
+}
+
+object ShowAllSenderId : SimpleCommand(
+    PluginMain, "ShowAllSender",
+    description = "查看所有拥有权限的小窝"
+) {
+    @Handler
+    suspend fun CommandSender.ShowAllSender() {
+        var flag = true
+        for (i in Mydata.senderid) {
+            PluginMain.logger.info("${bot?.getGroup(Mydata.originGroup)?.get(i)}拥有权限")
+            flag = false
+        }
+        if (flag) PluginMain.logger.info("当前没有小窝拥有权限")
     }
 }
 
