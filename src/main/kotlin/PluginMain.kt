@@ -6,6 +6,7 @@ package org.Reforward.mirai.plugin
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.Bot.Companion.getInstance
+import net.mamoe.mirai.Bot.Companion.getInstanceOrNull
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.command.CommandSender
@@ -45,6 +46,7 @@ object PluginMain : KotlinPlugin(
         DelAllGroupId.register()
         ShowAllGroup.register()
         ShowAllSenderId.register()
+        ChangeBotId.register()
         ForwardtheMsg()
     }
 
@@ -59,6 +61,7 @@ object PluginMain : KotlinPlugin(
         DelAllGroupId.unregister()
         ShowAllGroup.unregister()
         ShowAllSenderId.unregister()
+        ChangeBotId.unregister()
     }
 
 
@@ -90,6 +93,7 @@ object Mydata : AutoSavePluginConfig("Groups") {
     var groups: MutableSet<Long> by value(mutableSetOf<Long>())
     var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
     var originGroup: Long by value(445786154L)
+    var BotId: Long by value(103833821L)
 }
 
 object AddSenderId : SimpleCommand(
@@ -112,11 +116,19 @@ object DelSenderId : SimpleCommand(
 ) {
     @Handler
     suspend fun CommandSender.delSender(Id: Long) {
-        if (!Mydata.senderid.remove(Id)) {
-            PluginMain.logger.error("删除${getInstance(103833821).getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限失败")
-        } else {
-            PluginMain.logger.info("删除${getInstance(103833821).getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限成功")
+        val tempBot = getInstanceOrNull(Mydata.BotId)
+        if(tempBot == null){
+            PluginMain.logger.error("bot不存在")
         }
+        else{
+            if (!Mydata.senderid.remove(Id)) {
+                PluginMain.logger.error("删除${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限失败")
+            }
+            else {
+                PluginMain.logger.info("删除${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限成功")
+            }
+        }
+
     }
 }
 
@@ -137,12 +149,19 @@ object ShowAllSenderId : SimpleCommand(
 ) {
     @Handler
     suspend fun CommandSender.ShowAllSender() {
-        var flag = true
-        for (i in Mydata.senderid) {
-            PluginMain.logger.info("${getInstance(103833821).getGroup(Mydata.originGroup).get(i).nameCardOrNick}拥有权限")
-            flag = false
+        val tempBot = getInstanceOrNull(Mydata.BotId)
+        if(tempBot == null){
+            PluginMain.logger.error("bot不存在")
         }
-        if (flag) PluginMain.logger.info("当前没有小窝拥有权限")
+        else{
+            var flag = true
+            for (i in Mydata.senderid) {
+                PluginMain.logger.info("${tempBot.getGroup(Mydata.originGroup).get(i).nameCardOrNick}拥有权限")
+                flag = false
+            }
+            if (flag) PluginMain.logger.info("当前没有小窝拥有权限")
+        }
+
     }
 }
 
@@ -193,8 +212,30 @@ object ShowAllGroup : SimpleCommand(
 ){
     @Handler
     suspend fun CommandSender.ShowAllGroup(){
-        for(i in Mydata.groups){
-            PluginMain.logger.info("群名:${getInstance(103833821).getGroup(i).name},群号:${i}")
+        val tempBot= getInstanceOrNull(Mydata.BotId)
+        if(tempBot == null){
+            PluginMain.logger.error("bot不存在")
         }
+        else{
+            if(Mydata.groups.isEmpty()){
+                PluginMain.logger.info("群组列表为空")
+            }
+            else{
+                for(i in Mydata.groups){
+                    PluginMain.logger.info("群名:${tempBot.getGroup(i).name},群号:${i}")
+                }
+            }
+        }
+    }
+}
+
+object ChangeBotId : SimpleCommand(
+    PluginMain,"ChangeBot",
+    description = "在配置中改变bot qq号"
+){
+    @Handler
+    suspend fun CommandSender.ChgBotId(Id: Long){
+        Mydata.BotId=Id
+        PluginMain.logger.info("改变Bot的qq号为：${Id}")
     }
 }
