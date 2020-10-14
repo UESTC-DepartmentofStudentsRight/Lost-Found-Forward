@@ -38,6 +38,16 @@ object PluginMain : KotlinPlugin(
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Mydata.reload()
+        ForwardtheMsg()
+    }
+
+    override fun onDisable() {
+        super.onDisable()
+        logger.error("插件卸载!")
+    }
+
+
+    private fun commandRegister() {
         AddSenderId.register()
         AddGroupID.register()
         DelAllSenderId.register()
@@ -47,12 +57,9 @@ object PluginMain : KotlinPlugin(
         ShowAllGroup.register()
         ShowAllSenderId.register()
         ChangeBotId.register()
-        ForwardtheMsg()
     }
 
-    override fun onDisable() {
-        super.onDisable()
-        logger.error("插件卸载！")
+    private fun commandUnregister() {
         AddSenderId.unregister()
         AddGroupID.unregister()
         DelAllSenderId.unregister()
@@ -63,7 +70,6 @@ object PluginMain : KotlinPlugin(
         ShowAllSenderId.unregister()
         ChangeBotId.unregister()
     }
-
 
     private fun ForwardtheMsg() {
         subscribeGroupMessages {
@@ -93,7 +99,7 @@ object Mydata : AutoSavePluginConfig("Groups") {
     var groups: MutableSet<Long> by value(mutableSetOf<Long>())
     var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
     var originGroup: Long by value(445786154L)
-    var BotId: Long by value(103833821L)
+    var botId: Long by value(103833821L)
 }
 
 object AddSenderId : SimpleCommand(
@@ -116,16 +122,16 @@ object DelSenderId : SimpleCommand(
 ) {
     @Handler
     suspend fun CommandSender.delSender(Id: Long) {
-        val tempBot = getInstanceOrNull(Mydata.BotId)
+        val tempBot = getInstanceOrNull(Mydata.botId)
         if(tempBot == null){
             PluginMain.logger.error("bot不存在")
         }
         else{
             if (!Mydata.senderid.remove(Id)) {
-                PluginMain.logger.error("删除${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限失败")
+                PluginMain.logger.error("删除小窝${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的权限失败")
             }
             else {
-                PluginMain.logger.info("删除${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限成功")
+                PluginMain.logger.info("删除小窝${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的权限成功")
             }
         }
 
@@ -149,7 +155,7 @@ object ShowAllSenderId : SimpleCommand(
 ) {
     @Handler
     suspend fun CommandSender.ShowAllSender() {
-        val tempBot = getInstanceOrNull(Mydata.BotId)
+        val tempBot = getInstanceOrNull(Mydata.botId)
         if(tempBot == null){
             PluginMain.logger.error("bot不存在")
         }
@@ -212,7 +218,7 @@ object ShowAllGroup : SimpleCommand(
 ){
     @Handler
     suspend fun CommandSender.ShowAllGroup(){
-        val tempBot= getInstanceOrNull(Mydata.BotId)
+        val tempBot = getInstanceOrNull(Mydata.botId)
         if(tempBot == null){
             PluginMain.logger.error("bot不存在")
         }
@@ -230,12 +236,12 @@ object ShowAllGroup : SimpleCommand(
 }
 
 object ChangeBotId : SimpleCommand(
-    PluginMain,"ChangeBot",
-    description = "在配置中改变bot qq号"
+    PluginMain, "ChangeBot",
+    description = "在配置中改变bot的qq号"
 ){
     @Handler
     suspend fun CommandSender.ChgBotId(Id: Long){
-        Mydata.BotId=Id
+        Mydata.botId = Id
         PluginMain.logger.info("改变Bot的qq号为：${Id}")
     }
 }
