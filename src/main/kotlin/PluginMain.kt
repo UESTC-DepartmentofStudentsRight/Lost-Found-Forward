@@ -76,14 +76,14 @@ object PluginMain : KotlinPlugin(
     private fun ForwardtheMsg() {
         subscribeGroupMessages {
             always {
-                //PluginMain.logger.info("接收到了新的消息！")
+                PluginMain.logger.info("接收到了新的消息！")
                 val id: Long = group.id
                 val originGroup: Long = Mydata.originGroup
                 logger.info("id = ${id}, oringinGroup = ${originGroup}")
                 if (id == originGroup && sender.id in Mydata.senderid) {
-                    //logger.info("准备发送")
+                    logger.info("准备发送")
                     val messageChainBuilder = MessageChainBuilder()
-                    if (message.contentToString().substring(0, 0) == "#") {
+                    if (message.contentToString()[0] == '#') {
                         message.forEachContent {
                             if (it is PlainText) {
                                 messageChainBuilder.add(it.content.replaceFirst("#".toRegex(), ""))
@@ -91,7 +91,7 @@ object PluginMain : KotlinPlugin(
                             }
                             messageChainBuilder.add(it)
                         }
-                        send(message, bot)
+                        send(messageChainBuilder.asMessageChain(), bot)
                         return@always
                     }
                 }
