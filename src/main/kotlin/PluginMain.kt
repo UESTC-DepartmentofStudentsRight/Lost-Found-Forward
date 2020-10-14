@@ -5,25 +5,19 @@ package org.Reforward.mirai.plugin
 
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
-import net.mamoe.mirai.Bot.Companion.getInstance
 import net.mamoe.mirai.Bot.Companion.getInstanceOrNull
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
-import net.mamoe.mirai.console.command.getBotOrNull
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
-import net.mamoe.mirai.console.plugin.info
 import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.message.data.MessageChain
-import java.awt.color.CMMException
-import java.lang.Exception
-import kotlin.math.log
 
 
 val PluginID = "org.Reforward.mirai-plugin"
@@ -107,7 +101,7 @@ object AddSenderId : SimpleCommand(
     description = "添加允许转发的人的QQ号",
 ) {
     @Handler
-    suspend fun CommandSender.addSender(Id: Long) {
+    fun CommandSender.addSender(Id: Long) {
         if (!Mydata.senderid.add(Id)) {
             PluginMain.logger.error("你已经添加过这名小窝了")
         } else {
@@ -121,16 +115,14 @@ object DelSenderId : SimpleCommand(
     description = "移除小窝的转发权限",
 ) {
     @Handler
-    suspend fun CommandSender.delSender(Id: Long) {
+    fun CommandSender.delSender(Id: Long) {
         val tempBot = getInstanceOrNull(Mydata.botId)
-        if(tempBot == null){
+        if (tempBot == null) {
             PluginMain.logger.error("bot不存在")
-        }
-        else{
+        } else {
             if (!Mydata.senderid.remove(Id)) {
                 PluginMain.logger.error("删除小窝${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的权限失败")
-            }
-            else {
+            } else {
                 PluginMain.logger.info("删除小窝${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的权限成功")
             }
         }
@@ -143,7 +135,7 @@ object DelAllSenderId : SimpleCommand(
     description = "移除所有小窝的转发权限",
 ) {
     @Handler
-    suspend fun CommandSender.DelAllSender() {
+    fun CommandSender.DelAllSender() {
         Mydata.senderid.clear()
         PluginMain.logger.info("删除所有小窝的权限成功")
     }
@@ -154,12 +146,11 @@ object ShowAllSenderId : SimpleCommand(
     description = "查看所有拥有权限的小窝"
 ) {
     @Handler
-    suspend fun CommandSender.ShowAllSender() {
+    fun CommandSender.ShowAllSender() {
         val tempBot = getInstanceOrNull(Mydata.botId)
-        if(tempBot == null){
+        if (tempBot == null) {
             PluginMain.logger.error("bot不存在")
-        }
-        else{
+        } else {
             var flag = true
             for (i in Mydata.senderid) {
                 PluginMain.logger.info("${tempBot.getGroup(Mydata.originGroup).get(i).nameCardOrNick}拥有权限")
@@ -176,7 +167,7 @@ object AddGroupID : SimpleCommand(
     description = "添加转发的群",
 ) {
     @Handler
-    suspend fun CommandSender.addGroup(Id: Long) {
+    fun CommandSender.addGroup(Id: Long) {
         if (!Mydata.groups.add(Id)) {
             PluginMain.logger.error("你已经添加过这群了！")
         } else {
@@ -185,16 +176,15 @@ object AddGroupID : SimpleCommand(
     }
 }
 
-object DelGroupId: SimpleCommand(
+object DelGroupId : SimpleCommand(
     PluginMain, "DelGroup",
     description = "删除转发群组"
-){
+) {
     @Handler
-    suspend fun CommandSender.DelGroup(Id: Long){
-        if(!Mydata.groups.remove(Id)){
+    fun CommandSender.DelGroup(Id: Long) {
+        if (!Mydata.groups.remove(Id)) {
             PluginMain.logger.error("删除群${Id}失败")
-        }
-        else{
+        } else {
             PluginMain.logger.info("删除群${Id}成功")
         }
 
@@ -204,9 +194,9 @@ object DelGroupId: SimpleCommand(
 object DelAllGroupId : SimpleCommand(
     PluginMain, "DelAllGroup",
     description = "删除所有转发的群",
-){
+) {
     @Handler
-    suspend fun CommandSender.DelAllGroup(){
+    fun CommandSender.DelAllGroup() {
         Mydata.groups.clear()
         PluginMain.logger.info("删除所有转发群组成功")
     }
@@ -215,19 +205,17 @@ object DelAllGroupId : SimpleCommand(
 object ShowAllGroup : SimpleCommand(
     PluginMain, "ShowAllGroup",
     description = "查看目前的转发群列表"
-){
+) {
     @Handler
-    suspend fun CommandSender.ShowAllGroup(){
+    fun CommandSender.ShowAllGroup() {
         val tempBot = getInstanceOrNull(Mydata.botId)
-        if(tempBot == null){
+        if (tempBot == null) {
             PluginMain.logger.error("bot不存在")
-        }
-        else{
-            if(Mydata.groups.isEmpty()){
+        } else {
+            if (Mydata.groups.isEmpty()) {
                 PluginMain.logger.info("群组列表为空")
-            }
-            else{
-                for(i in Mydata.groups){
+            } else {
+                for (i in Mydata.groups) {
                     PluginMain.logger.info("群名:${tempBot.getGroup(i).name},群号:${i}")
                 }
             }
@@ -238,9 +226,9 @@ object ShowAllGroup : SimpleCommand(
 object ChangeBotId : SimpleCommand(
     PluginMain, "ChangeBot",
     description = "在配置中改变bot的qq号"
-){
+) {
     @Handler
-    suspend fun CommandSender.ChgBotId(Id: Long){
+    fun CommandSender.ChgBotId(Id: Long) {
         Mydata.botId = Id
         PluginMain.logger.info("改变Bot的qq号为：${Id}")
     }
