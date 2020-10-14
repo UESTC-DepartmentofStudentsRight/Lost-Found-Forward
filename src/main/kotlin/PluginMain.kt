@@ -35,6 +35,9 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
+    private val BotId = 103833821L
+    private val pwd = "qyxw0521"
+
     @ConsoleExperimentalApi
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
@@ -53,7 +56,7 @@ object PluginMain : KotlinPlugin(
     @ConsoleExperimentalApi
     fun autoLogin() {
         PluginMain.launch {
-            MiraiConsole.addBot(103833821, "qyxw0521") {
+            MiraiConsole.addBot(BotId, pwd) {
                 fileBasedDeviceInfo()
             }.alsoLogin()
         }
@@ -262,7 +265,7 @@ object ChangeBotId : SimpleCommand(
     description = "在配置中改变bot的qq号"
 ) {
     @Handler
-    fun CommandSender.ChgBotId(Id: Long) {
+    fun CommandSender.ChangeBot(Id: Long) {
         Mydata.botId = Id
         PluginMain.logger.info("改变Bot的qq号为：${Id}")
     }
@@ -273,7 +276,7 @@ object ChangeOriginGroup : SimpleCommand(
     description = "更改失物招领管理员群"
 ) {
     @Handler
-    fun CommandSender.ChgOGrp(Id: Long) {
+    fun CommandSender.ChangerOriginGroup(Id: Long) {
         Mydata.originGroup = Id
         PluginMain.logger.info("已修改失物招领管理员群为: $Id")
     }
@@ -284,7 +287,7 @@ object ShowOriginGroup : SimpleCommand(
     description = "显示当前失物招领管理员群群号"
 ) {
     @Handler
-    fun CommandSender.ChgOGrp() {
-        PluginMain.logger.info("已修改失物招领管理员群为: ${Mydata.originGroup}")
+    fun CommandSender.ShowOriginGroup() {
+        PluginMain.logger.info("当前失物招领管理员群为: ${Mydata.originGroup}")
     }
 }
