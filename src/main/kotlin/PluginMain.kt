@@ -3,6 +3,7 @@
 package org.Reforward.mirai.plugin
 
 
+import com.google.auto.service.AutoService
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.Bot.Companion.getInstanceOrNull
@@ -26,6 +27,8 @@ import net.mamoe.mirai.message.data.forEachContent
 val PluginID = "org.Reforward.mirai-plugin"
 val PluginVersion = "0.0.1"
 
+
+@AutoService(KotlinPlugin::class)
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = PluginID,
