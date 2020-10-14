@@ -5,16 +5,19 @@ package org.Reforward.mirai.plugin
 
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
+import net.mamoe.mirai.Bot.Companion.getInstance
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.unregister
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.SimpleCommand
+import net.mamoe.mirai.console.command.getBotOrNull
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.plugin.info
+import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.message.data.MessageChain
 import java.awt.color.CMMException
@@ -38,6 +41,10 @@ object PluginMain : KotlinPlugin(
         AddGroupID.register()
         DelAllSenderId.register()
         DelSenderId.register()
+        DelGroupId.register()
+        DelAllGroupId.register()
+        ShowAllGroup.register()
+        ShowAllSenderId.register()
         ForwardtheMsg()
     }
 
@@ -48,6 +55,10 @@ object PluginMain : KotlinPlugin(
         AddGroupID.unregister()
         DelAllSenderId.unregister()
         DelSenderId.unregister()
+        DelGroupId.unregister()
+        DelAllGroupId.unregister()
+        ShowAllGroup.unregister()
+        ShowAllSenderId.unregister()
     }
 
 
@@ -82,7 +93,7 @@ object Mydata : AutoSavePluginConfig("Groups") {
 }
 
 object AddSenderId : SimpleCommand(
-    PluginMain, "addSender",
+    PluginMain, "AddSender",
     description = "添加允许转发的人的QQ号",
 ) {
     @Handler
@@ -102,9 +113,9 @@ object DelSenderId : SimpleCommand(
     @Handler
     suspend fun CommandSender.delSender(Id: Long) {
         if (!Mydata.senderid.remove(Id)) {
-            PluginMain.logger.error("删除${bot?.getGroup(Mydata.originGroup)?.get(Id)}的小窝的权限失败")
+            PluginMain.logger.error("删除${getInstance(103833821).getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限失败")
         } else {
-            PluginMain.logger.info("删除${bot?.getGroup(Mydata.originGroup)?.get(Id)}的小窝的权限小窝成功")
+            PluginMain.logger.info("删除${getInstance(103833821).getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限成功")
         }
     }
 }
@@ -128,7 +139,7 @@ object ShowAllSenderId : SimpleCommand(
     suspend fun CommandSender.ShowAllSender() {
         var flag = true
         for (i in Mydata.senderid) {
-            PluginMain.logger.info("${bot?.getGroup(Mydata.originGroup)?.get(i)}拥有权限")
+            PluginMain.logger.info("${getInstance(103833821).getGroup(Mydata.originGroup).get(i).nameCardOrNick}拥有权限")
             flag = false
         }
         if (flag) PluginMain.logger.info("当前没有小窝拥有权限")
@@ -145,6 +156,45 @@ object AddGroupID : SimpleCommand(
             PluginMain.logger.error("你已经添加过这群了！")
         } else {
             PluginMain.logger.info("添加转发的群成功！")
+        }
+    }
+}
+
+object DelGroupId: SimpleCommand(
+    PluginMain, "DelGroup",
+    description = "删除转发群组"
+){
+    @Handler
+    suspend fun CommandSender.DelGroup(Id: Long){
+        if(!Mydata.groups.remove(Id)){
+            PluginMain.logger.error("删除群${Id}失败")
+        }
+        else{
+            PluginMain.logger.info("删除群${Id}成功")
+        }
+
+    }
+}
+
+object DelAllGroupId : SimpleCommand(
+    PluginMain, "DelAllGroup",
+    description = "删除所有转发的群",
+){
+    @Handler
+    suspend fun CommandSender.DelAllGroup(){
+        Mydata.groups.clear()
+        PluginMain.logger.info("删除所有转发群组成功")
+    }
+}
+
+object ShowAllGroup : SimpleCommand(
+    PluginMain, "ShowAllGroup",
+    description = "查看目前的转发群列表"
+){
+    @Handler
+    suspend fun CommandSender.ShowAllGroup(){
+        for(i in Mydata.groups){
+            PluginMain.logger.info("群名:${getInstance(103833821).getGroup(i).name},群号:${i}")
         }
     }
 }
