@@ -18,10 +18,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.subscribeGroupMessages
-import net.mamoe.mirai.message.data.MessageChain
-import net.mamoe.mirai.message.data.MessageChainBuilder
-import net.mamoe.mirai.message.data.PlainText
-import net.mamoe.mirai.message.data.forEachContent
+import net.mamoe.mirai.message.data.*
 
 
 val PluginID = "org.Reforward.mirai-plugin"
@@ -79,9 +76,9 @@ object PluginMain : KotlinPlugin(
                 PluginMain.logger.info("接收到了新的消息！")
                 val id: Long = group.id
                 val originGroup: Long = Mydata.originGroup
-                logger.info("id = ${id}, oringinGroup = ${originGroup}")
+                //logger.info("id = ${id}, oringinGroup = ${originGroup}")
                 if (id == originGroup && sender.id in Mydata.senderid) {
-                    logger.info("准备发送")
+                    //logger.info("准备发送")
                     val messageChainBuilder = MessageChainBuilder()
                     if (message.contentToString()[0] == '#') {
                         message.forEachContent {
@@ -92,6 +89,7 @@ object PluginMain : KotlinPlugin(
                             messageChainBuilder.add(it)
                         }
                         send(messageChainBuilder.asMessageChain(), bot)
+                        bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
                     }
                 }
