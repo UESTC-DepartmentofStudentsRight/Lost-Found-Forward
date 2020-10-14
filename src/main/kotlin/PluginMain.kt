@@ -20,6 +20,7 @@ import net.mamoe.mirai.console.plugin.info
 import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.message.data.MessageChain
+import org.Reforward.mirai.plugin.Mydata.botid
 import java.awt.color.CMMException
 import java.lang.Exception
 import kotlin.math.log
@@ -37,28 +38,14 @@ object PluginMain : KotlinPlugin(
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Mydata.reload()
-        AddSenderId.register()
-        AddGroupID.register()
-        DelAllSenderId.register()
-        DelSenderId.register()
-        DelGroupId.register()
-        DelAllGroupId.register()
-        ShowAllGroup.register()
-        ShowAllSenderId.register()
+        CommandRegister()
         ForwardtheMsg()
     }
 
     override fun onDisable() {
         super.onDisable()
+        CommandUnregister()
         logger.error("插件卸载！")
-        AddSenderId.unregister()
-        AddGroupID.unregister()
-        DelAllSenderId.unregister()
-        DelSenderId.unregister()
-        DelGroupId.unregister()
-        DelAllGroupId.unregister()
-        ShowAllGroup.unregister()
-        ShowAllSenderId.unregister()
     }
 
 
@@ -77,6 +64,30 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    private fun CommandRegister(): Unit {
+        AddSenderId.register()
+        AddGroupID.register()
+        DelAllSenderId.register()
+        DelSenderId.register()
+        DelGroupId.register()
+        DelAllGroupId.register()
+        ShowAllGroup.register()
+        ShowAllSenderId.register()
+        ChangeBotID.register()
+    }
+
+    private fun CommandUnregister(): Unit {
+        AddSenderId.unregister()
+        AddGroupID.unregister()
+        DelAllSenderId.unregister()
+        DelSenderId.unregister()
+        DelGroupId.unregister()
+        DelAllGroupId.unregister()
+        ShowAllGroup.unregister()
+        ShowAllSenderId.unregister()
+        ChangeBotID.unregister()
+    }
+
 
     private fun send(messagechain: MessageChain, bot: Bot) {
         val groups = Mydata.groups
@@ -90,6 +101,7 @@ object Mydata : AutoSavePluginConfig("Groups") {
     var groups: MutableSet<Long> by value(mutableSetOf<Long>())
     var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
     var originGroup: Long by value(445786154L)
+    var botid: Long by value(103833821L)
 }
 
 object AddSenderId : SimpleCommand(
@@ -113,9 +125,17 @@ object DelSenderId : SimpleCommand(
     @Handler
     suspend fun CommandSender.delSender(Id: Long) {
         if (!Mydata.senderid.remove(Id)) {
-            PluginMain.logger.error("删除${getInstance(103833821).getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限失败")
+            PluginMain.logger.error(
+                "删除${
+                    getInstance(Mydata.botid).getGroup(Mydata.originGroup).get(Id).nameCardOrNick
+                }的小窝的权限失败"
+            )
         } else {
-            PluginMain.logger.info("删除${getInstance(103833821).getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的小窝的权限成功")
+            PluginMain.logger.info(
+                "删除${
+                    getInstance(Mydata.botid).getGroup(Mydata.originGroup).get(Id).nameCardOrNick
+                }的小窝的权限成功"
+            )
         }
     }
 }
@@ -139,7 +159,11 @@ object ShowAllSenderId : SimpleCommand(
     suspend fun CommandSender.ShowAllSender() {
         var flag = true
         for (i in Mydata.senderid) {
-            PluginMain.logger.info("${getInstance(103833821).getGroup(Mydata.originGroup).get(i).nameCardOrNick}拥有权限")
+            PluginMain.logger.info(
+                "${
+                    getInstance(Mydata.botid).getGroup(Mydata.originGroup).get(i).nameCardOrNick
+                }拥有权限"
+            )
             flag = false
         }
         if (flag) PluginMain.logger.info("当前没有小窝拥有权限")
@@ -190,11 +214,21 @@ object DelAllGroupId : SimpleCommand(
 object ShowAllGroup : SimpleCommand(
     PluginMain, "ShowAllGroup",
     description = "查看目前的转发群列表"
-){
+) {
     @Handler
-    suspend fun CommandSender.ShowAllGroup(){
-        for(i in Mydata.groups){
-            PluginMain.logger.info("群名:${getInstance(103833821).getGroup(i).name},群号:${i}")
+    suspend fun CommandSender.ShowAllGroup() {
+        for (i in Mydata.groups) {
+            PluginMain.logger.info("群名:${getInstance(Mydata.botid).getGroup(i).name},群号:${i}")
         }
+    }
+}
+
+object ChangeBotID : SimpleCommand(
+    PluginMain, "ChangeBot",
+    description = "修改小天使的QQ号"
+) {
+    @Handler
+    suspend fun CommandSender.ChangeBotID(Id: Long) {
+        Mydata.botid = Id
     }
 }
