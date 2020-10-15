@@ -100,7 +100,7 @@ object PluginMain : KotlinPlugin(
                 if (id == originGroup && sender.id in Mydata.senderid) {
                     //logger.info("准备发送")
                     val messageChainBuilder = MessageChainBuilder()
-                    if (message.contentToString()[0] == '#') {
+                    if (message.contentToString()[0] == '#' && message.contentToString().length > 1) {
                         message.forEachContent {
                             if (it is PlainText) {
                                 messageChainBuilder.add(it.content.replaceFirst("#".toRegex(), ""))
