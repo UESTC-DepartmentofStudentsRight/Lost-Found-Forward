@@ -96,7 +96,7 @@ object PluginMain : KotlinPlugin(
                 PluginMain.logger.info("接收到了一个临时会话")
                 val id: Long = sender.id
                 val group: Long = group.id
-                val tempset = Botdata.Foundpeople
+                val tempset = Botdata.cachesender
                 if (group in Mydata.groups && id !in tempset) {
                     launch {
                         sender.sendMessage("请找群里的其他管理员哦！")
@@ -131,5 +131,5 @@ object Mydata : AutoSavePluginConfig("Groups") {
 }
 
 object Botdata : AutoSavePluginData("bot") {
-    var Foundpeople by value(mutableSetOf<Long>())
+    var cachesender by value(mutableSetOf<Long>())
 }
