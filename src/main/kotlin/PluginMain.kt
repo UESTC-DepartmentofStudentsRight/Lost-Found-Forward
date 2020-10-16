@@ -13,9 +13,9 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
+import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.event.subscribeFriendMessages
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.event.subscribeTempMessages
 import net.mamoe.mirai.message.data.*
@@ -94,9 +94,17 @@ object PluginMain : KotlinPlugin(
         subscribeTempMessages() {
             always {
                 PluginMain.logger.info("接收到了一个临时会话")
+                val id: Long = sender.id
                 val group: Long = group.id
-                if (group in Mydata.groups) {
-                    sender.sendMessage("请找群里的其他管理员哦！")
+                val tempset = Botdata.Foundpeople
+                if (group in Mydata.groups && id !in tempset) {
+                    launch {
+                        sender.sendMessage("请找群里的其他管理员哦！")
+                        if (tempset.size > 20) {
+                            tempset.drop(1)
+                            tempset.add(sender.id)
+                        }
+                    }
                 }
             }
         }
@@ -107,7 +115,7 @@ object PluginMain : KotlinPlugin(
         val groups = Mydata.groups
         for (id: Long in groups) {
             launch {
-                val time: Long = (8000L..15000L).random()
+                val time: Long = (0L..15000L).random()
                 delay(time)
                 bot.getGroup(id).sendMessage(messagechain)
             }
@@ -122,3 +130,6 @@ object Mydata : AutoSavePluginConfig("Groups") {
     var botId: Long by value(103833821L)
 }
 
+object Botdata : AutoSavePluginData("bot") {
+    var Foundpeople by value(mutableSetOf<Long>())
+}
