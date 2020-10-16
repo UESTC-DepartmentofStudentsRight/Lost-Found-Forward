@@ -4,6 +4,7 @@ package org.Reforward.mirai.plugin
 
 
 import com.google.auto.service.AutoService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.Bot.Companion.getInstanceOrNull
@@ -35,8 +36,8 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 103833821L
-    private val pwd = "qyxw0521"
+    private val BotId = 2641529228L
+    private val pwd = "elizabeth123"
 
     @ConsoleExperimentalApi
     override fun onEnable() {
@@ -121,7 +122,11 @@ object PluginMain : KotlinPlugin(
     private fun send(messagechain: MessageChain, bot: Bot) {
         val groups = Mydata.groups
         for (id: Long in groups) {
-            launch { bot.getGroup(id).sendMessage(messagechain) }
+            launch {
+                val time: Long = (0L..4000L).random()
+                delay(time)
+                bot.getGroup(id).sendMessage(messagechain)
+            }
         }
     }
 }
