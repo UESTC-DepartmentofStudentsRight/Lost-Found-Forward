@@ -20,7 +20,6 @@ object CommandRegister {
         DelAllGroupId.register()
         ShowAllGroup.register()
         ShowAllSenderId.register()
-        ChangeBotId.register()
         ChangeOriginGroup.register()
         ShowOriginGroup.register()
     }
@@ -34,7 +33,6 @@ object CommandRegister {
         DelAllGroupId.unregister()
         ShowAllGroup.unregister()
         ShowAllSenderId.unregister()
-        ChangeBotId.unregister()
         ChangeOriginGroup.unregister()
         ShowOriginGroup.unregister()
     }
@@ -167,16 +165,6 @@ object ShowAllGroup : SimpleCommand(
     }
 }
 
-object ChangeBotId : SimpleCommand(
-    PluginMain, "ChangeBot",
-    description = "在配置中改变bot的qq号"
-) {
-    @Handler
-    fun CommandSender.ChangeBot(Id: Long) {
-        Mydata.botId = Id
-        PluginMain.logger.info("改变Bot的qq号为：${Id}")
-    }
-}
 
 object ChangeOriginGroup : SimpleCommand(
     PluginMain, "ChangeOriginGroup",

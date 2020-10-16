@@ -15,13 +15,14 @@ import net.mamoe.mirai.utils.info
 import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.event.subscribeFriendMessages
 import net.mamoe.mirai.event.subscribeGroupMessages
+import net.mamoe.mirai.event.subscribeTempMessages
 import net.mamoe.mirai.message.data.*
-import org.Reforward.mirai.plugin.CommandRegister.commandUnregister
 
 
 val PluginID = "org.Reforward.mirai-plugin"
-val PluginVersion = "0.0.5"
+val PluginVersion = "0.0.8"
 
 
 @AutoService(KotlinPlugin::class)
@@ -38,14 +39,16 @@ object PluginMain : KotlinPlugin(
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Mydata.reload()
-        CommandRegister
+        CommandRegister.commandRegister()
         ForwardtheMsg()
+        Replytempmessage()
         autoLogin()
+        Mydata.botId = BotId
     }
 
     override fun onDisable() {
         super.onDisable()
-        commandUnregister()
+        CommandRegister.commandUnregister()
         logger.error("插件卸载!")
     }
 
@@ -82,6 +85,18 @@ object PluginMain : KotlinPlugin(
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
                     }
+                }
+            }
+        }
+    }
+
+    private fun Replytempmessage() {
+        subscribeTempMessages() {
+            always {
+                PluginMain.logger.info("接收到了一个临时会话")
+                val group: Long = group.id
+                if (group in Mydata.groups) {
+                    sender.sendMessage("请找群里的其他管理员哦！")
                 }
             }
         }
