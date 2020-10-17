@@ -99,7 +99,7 @@ object PluginMain : KotlinPlugin(
                 val tempset = Botdata.cachesender
                 if (group in Mydata.groups && id !in tempset) {
                     launch {
-                        sender.sendMessage("这是一条自动回复消息，请找群里的其他管理员哦！")
+                        sender.sendMessage("小天使是自动转发的BOT, 这是一条自动回复消息，请找群里的其他管理员哦！")
                         tempset.add(sender.id)
                         if (tempset.size > 20)
                             tempset.drop(1)
