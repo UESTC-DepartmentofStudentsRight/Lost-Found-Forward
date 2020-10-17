@@ -99,11 +99,10 @@ object PluginMain : KotlinPlugin(
                 val tempset = Botdata.cachesender
                 if (group in Mydata.groups && id !in tempset) {
                     launch {
-                        sender.sendMessage("请找群里的其他管理员哦！")
-                        if (tempset.size > 20) {
+                        sender.sendMessage("这是一条自动回复消息，请找群里的其他管理员哦！")
+                        tempset.add(sender.id)
+                        if (tempset.size > 20)
                             tempset.drop(1)
-                            tempset.add(sender.id)
-                        }
                     }
                 }
             }
@@ -127,7 +126,7 @@ object Mydata : AutoSavePluginConfig("Groups") {
     var groups: MutableSet<Long> by value(mutableSetOf<Long>())
     var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
     var originGroup: Long by value(445786154L)
-    var botId: Long by value(103833821L)
+    var botId: Long by value(2026338927L)
 }
 
 object Botdata : AutoSavePluginData("bot") {
