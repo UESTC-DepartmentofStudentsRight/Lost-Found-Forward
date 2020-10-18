@@ -40,8 +40,8 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 103833821L
-    private val pwd = "qyxw0521"
+    private val BotId = 2026338927L
+    private val pwd = "QYXW2020"
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
 
     @ConsoleExperimentalApi
@@ -125,7 +125,11 @@ object PluginMain : KotlinPlugin(
                 val recallmessage = cacheMessage[messageId]
                 if (recallmessage != null) {
                     for (msg in recallmessage) {
-                        msg.recall()
+                        launch {
+                            val time: Long = (2L..15000L).random()
+                            delay(time)
+                            msg.recall()
+                        }
                     }
                 }
             }
