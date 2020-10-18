@@ -16,9 +16,17 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.contact.Group
+import net.mamoe.mirai.event.Listener
+import net.mamoe.mirai.event.events.MessageRecallEvent
+import net.mamoe.mirai.event.subscribeAlways
 import net.mamoe.mirai.event.subscribeGroupMessages
 import net.mamoe.mirai.event.subscribeTempMessages
+import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.message.recall
+import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 
 val PluginID = "org.Reforward.mirai-plugin"
@@ -32,8 +40,9 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 2026338927L
-    private val pwd = "QYXW2020"
+    private val BotId = 103833821L
+    private val pwd = "qyxw0521"
+    private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
 
     @ConsoleExperimentalApi
     override fun onEnable() {
@@ -42,6 +51,7 @@ object PluginMain : KotlinPlugin(
         CommandRegister.commandRegister()
         ForwardtheMsg()
         Replytempmessage()
+        SubcribeRecall()
         autoLogin()
         Mydata.botId = BotId
     }
@@ -62,7 +72,6 @@ object PluginMain : KotlinPlugin(
     }
 
 
-
     private fun ForwardtheMsg() {
         subscribeGroupMessages {
             always {
@@ -81,7 +90,7 @@ object PluginMain : KotlinPlugin(
                             }
                             messageChainBuilder.add(it)
                         }
-                        send(messageChainBuilder.asMessageChain(), bot)
+                        send(messageChainBuilder.asMessageChain(), bot, message.id)
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
                     }
@@ -109,14 +118,34 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    private fun SubcribeRecall() {
+        subscribeAlways<MessageRecallEvent.GroupRecall>(priority = Listener.EventPriority.HIGHEST) {
+            if (authorId in Mydata.senderid && group.id == Mydata.originGroup) {
+                PluginMain.logger.info("准备撤回群内消息！")
+                val recallmessage = cacheMessage[messageId]
+                if (recallmessage != null) {
+                    for (msg in recallmessage) {
+                        msg.recall()
+                    }
+                }
+            }
+        }
+    }
 
-    private fun send(messagechain: MessageChain, bot: Bot) {
+
+    private fun send(messagechain: MessageChain, bot: Bot, messageID: Int) {
         val groups = Mydata.groups
+        val cnt = AtomicInteger(0)
+        val cacheReceipt = Collections.synchronizedSet(mutableSetOf<MessageReceipt<Group>>())
         for (id: Long in groups) {
             launch {
-                val time: Long = (0L..15000L).random()
+                val time: Long = (2L..15000L).random()
                 delay(time)
-                bot.getGroup(id).sendMessage(messagechain)
+                cnt.incrementAndGet()
+                cacheReceipt.add(bot.getGroup(id).sendMessage(messagechain))
+                if (cnt.toInt() == Mydata.groups.size) {
+                    cacheMessage[messageID] = cacheReceipt
+                }
             }
         }
     }
