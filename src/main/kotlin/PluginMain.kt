@@ -166,14 +166,14 @@ object PluginMain : KotlinPlugin(
         launch {
             while (true) {
                 if (Data.date == SimpleDateFormat("yyyy-MM-dd")) {
-                    delay(43200000L)
+                    delay(3600000L)
                     continue
                 }
                 Data.date = SimpleDateFormat("yyyy-MM-dd")
                 thisBot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
                 delay(10000L)
                 cacheMessage.clear()
-                thisBot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕")
+                thisBot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
                 /*
                 统计劳模部分
                  */
@@ -192,4 +192,5 @@ object Config : AutoSavePluginConfig("Groups") {
 object Data : AutoSavePluginData("bot") {
     var cachesender by value(mutableSetOf<Long>())
     var date by value(SimpleDateFormat("yyyy-MM-dd"))
+    var MessageCnt by value(mutableMapOf<Long, Int>())
 }

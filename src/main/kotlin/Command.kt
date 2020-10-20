@@ -44,7 +44,7 @@ object AddSenderId : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.addSender(Id: Long) {
-        if (!Mydata.senderid.add(Id)) {
+        if (!Config.senderid.add(Id)) {
             PluginMain.logger.error("你已经添加过这名小窝了")
         } else {
             PluginMain.logger.info("添加小窝成功！")
@@ -58,14 +58,14 @@ object DelSenderId : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.delSender(Id: Long) {
-        val tempBot = Bot.getInstanceOrNull(Mydata.botId)
+        val tempBot = Bot.getInstanceOrNull(Config.botId)
         if (tempBot == null) {
             PluginMain.logger.error("bot不存在")
         } else {
-            if (!Mydata.senderid.remove(Id)) {
-                PluginMain.logger.error("删除小窝${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的权限失败")
+            if (!Config.senderid.remove(Id)) {
+                PluginMain.logger.error("删除小窝${tempBot.getGroup(Config.originGroup).get(Id).nameCardOrNick}的权限失败")
             } else {
-                PluginMain.logger.info("删除小窝${tempBot.getGroup(Mydata.originGroup).get(Id).nameCardOrNick}的权限成功")
+                PluginMain.logger.info("删除小窝${tempBot.getGroup(Config.originGroup).get(Id).nameCardOrNick}的权限成功")
             }
         }
 
@@ -78,7 +78,7 @@ object DelAllSenderId : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.DelAllSender() {
-        Mydata.senderid.clear()
+        Config.senderid.clear()
         PluginMain.logger.info("删除所有小窝的权限成功")
     }
 }
@@ -89,13 +89,13 @@ object ShowAllSenderId : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.ShowAllSender() {
-        val tempBot = Bot.getInstanceOrNull(Mydata.botId)
+        val tempBot = Bot.getInstanceOrNull(Config.botId)
         if (tempBot == null) {
             PluginMain.logger.error("bot不存在")
         } else {
             var flag = true
-            for (i in Mydata.senderid) {
-                PluginMain.logger.info("${tempBot.getGroup(Mydata.originGroup).get(i).nameCardOrNick}拥有权限")
+            for (i in Config.senderid) {
+                PluginMain.logger.info("${tempBot.getGroup(Config.originGroup).get(i).nameCardOrNick}拥有权限")
                 flag = false
             }
             if (flag) PluginMain.logger.info("当前没有小窝拥有权限")
@@ -110,7 +110,7 @@ object AddGroupID : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.addGroup(Id: Long) {
-        if (!Mydata.groups.add(Id)) {
+        if (!Config.groups.add(Id)) {
             PluginMain.logger.error("你已经添加过这群了！")
         } else {
             PluginMain.logger.info("添加转发的群成功！")
@@ -124,7 +124,7 @@ object DelGroupId : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.DelGroup(Id: Long) {
-        if (!Mydata.groups.remove(Id)) {
+        if (!Config.groups.remove(Id)) {
             PluginMain.logger.error("删除群${Id}失败")
         } else {
             PluginMain.logger.info("删除群${Id}成功")
@@ -139,7 +139,7 @@ object DelAllGroupId : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.DelAllGroup() {
-        Mydata.groups.clear()
+        Config.groups.clear()
         PluginMain.logger.info("删除所有转发群组成功")
     }
 }
@@ -150,14 +150,14 @@ object ShowAllGroup : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.ShowAllGroup() {
-        val tempBot = Bot.getInstanceOrNull(Mydata.botId)
+        val tempBot = Bot.getInstanceOrNull(Config.botId)
         if (tempBot == null) {
             PluginMain.logger.error("bot不存在")
         } else {
-            if (Mydata.groups.isEmpty()) {
+            if (Config.groups.isEmpty()) {
                 PluginMain.logger.info("群组列表为空")
             } else {
-                for (i in Mydata.groups) {
+                for (i in Config.groups) {
                     PluginMain.logger.info("群名:${tempBot.getGroup(i).name},群号:${i}")
                 }
             }
@@ -172,7 +172,7 @@ object ChangeOriginGroup : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.ChangeOriginGroup(Id: Long) {
-        Mydata.originGroup = Id
+        Config.originGroup = Id
         PluginMain.logger.info("已修改失物招领管理员群为: $Id")
     }
 }
@@ -183,6 +183,6 @@ object ShowOriginGroup : SimpleCommand(
 ) {
     @Handler
     fun CommandSender.ShowOriginGroup() {
-        PluginMain.logger.info("当前失物招领管理员群为: ${Mydata.originGroup}")
+        PluginMain.logger.info("当前失物招领管理员群为: ${Config.originGroup}")
     }
 }
