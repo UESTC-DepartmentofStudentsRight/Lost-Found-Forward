@@ -25,6 +25,7 @@ import net.mamoe.mirai.event.subscribeTempMessages
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.recall
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -40,21 +41,27 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 2026338927L
-    private val pwd = "QYXW2020"
+    private val BotId = 103833821L
+    private val pwd = "qyxw0521"
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
+
+    @ConsoleExperimentalApi
+    private val thisBot = MiraiConsole.addBot(BotId, pwd) {
+        fileBasedDeviceInfo()
+    }
 
 
     @ConsoleExperimentalApi
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
-        Mydata.reload()
+        Config.reload()
         CommandRegister.commandRegister()
         ForwardtheMsg()
         Replytempmessage()
         SubcribeRecall()
         autoLogin()
-        Mydata.botId = BotId
+        timeAction()
+        Config.botId = BotId
     }
 
     override fun onDisable() {
@@ -66,9 +73,7 @@ object PluginMain : KotlinPlugin(
     @ConsoleExperimentalApi
     fun autoLogin() {
         PluginMain.launch {
-            MiraiConsole.addBot(BotId, pwd) {
-                fileBasedDeviceInfo()
-            }.alsoLogin()
+            thisBot.alsoLogin()
         }
     }
 
@@ -78,9 +83,9 @@ object PluginMain : KotlinPlugin(
             always {
                 PluginMain.logger.info("接收到了新的消息！")
                 val id: Long = group.id
-                val originGroup: Long = Mydata.originGroup
+                val originGroup: Long = Config.originGroup
                 //logger.info("id = ${id}, oringinGroup = ${originGroup}")
-                if (id == originGroup && sender.id in Mydata.senderid) {
+                if (id == originGroup && sender.id in Config.senderid) {
                     //logger.info("准备发送")
                     val messageChainBuilder = MessageChainBuilder()
                     if (message.contentToString()[0] == '#' && message.contentToString().length > 1) {
@@ -106,8 +111,8 @@ object PluginMain : KotlinPlugin(
                 PluginMain.logger.info("接收到了一个临时会话")
                 val id: Long = sender.id
                 val group: Long = group.id
-                val tempset = Botdata.cachesender
-                if (group in Mydata.groups && id !in tempset) {
+                val tempset = Data.cachesender
+                if (group in Config.groups && id !in tempset) {
                     launch {
                         sender.sendMessage("小天使是自动转发的BOT, 这是一条自动回复消息，请找群里的其他管理员哦！")
                         tempset.add(sender.id)
@@ -121,11 +126,11 @@ object PluginMain : KotlinPlugin(
 
     private fun SubcribeRecall() {
         subscribeAlways<MessageRecallEvent.GroupRecall>(priority = Listener.EventPriority.HIGHEST) {
-            if (authorId in Mydata.senderid && group.id == Mydata.originGroup) {
+            if (authorId in Config.senderid && group.id == Config.originGroup) {
                 PluginMain.logger.info("准备撤回群内消息！")
                 val recallmessage = cacheMessage[messageId]
                 if (recallmessage != null) {
-                    while (recallmessage.size != Mydata.groups.size) delay(10000L)
+                    while (recallmessage.size != Config.groups.size) delay(10000L)
                     for (msg in recallmessage) {
                         launch {
                             val time: Long = (2L..15000L).random()
@@ -140,7 +145,7 @@ object PluginMain : KotlinPlugin(
 
 
     private fun send(messagechain: MessageChain, bot: Bot, messageID: Int) {
-        val groups = Mydata.groups
+        val groups = Config.groups
         val cnt = AtomicInteger(0)
         val cacheReceipt = Collections.synchronizedSet(mutableSetOf<MessageReceipt<Group>>())
         for (id: Long in groups) {
@@ -149,21 +154,42 @@ object PluginMain : KotlinPlugin(
                 delay(time)
                 cnt.incrementAndGet()
                 cacheReceipt.add(bot.getGroup(id).sendMessage(messagechain))
-                if (cnt.toInt() == Mydata.groups.size) {
+                if (cnt.toInt() == Config.groups.size) {
                     cacheMessage[messageID] = cacheReceipt
                 }
             }
         }
     }
+
+    @ConsoleExperimentalApi
+    private fun timeAction() {
+        launch {
+            while (true) {
+                if (Data.date == SimpleDateFormat("yyyy-MM-dd")) {
+                    delay(43200000L)
+                    continue
+                }
+                Data.date = SimpleDateFormat("yyyy-MM-dd")
+                thisBot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
+                delay(10000L)
+                cacheMessage.clear()
+                thisBot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕")
+                /*
+                统计劳模部分
+                 */
+            }
+        }
+    }
 }
 
-object Mydata : AutoSavePluginConfig("Groups") {
+object Config : AutoSavePluginConfig("Groups") {
     var groups: MutableSet<Long> by value(mutableSetOf<Long>())
     var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
     var originGroup: Long by value(445786154L)
     var botId: Long by value(2026338927L)
 }
 
-object Botdata : AutoSavePluginData("bot") {
+object Data : AutoSavePluginData("bot") {
     var cachesender by value(mutableSetOf<Long>())
+    var date by value(SimpleDateFormat("yyyy-MM-dd"))
 }
