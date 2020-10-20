@@ -44,6 +44,7 @@ object PluginMain : KotlinPlugin(
     private val pwd = "QYXW2020"
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
 
+
     @ConsoleExperimentalApi
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
@@ -124,6 +125,7 @@ object PluginMain : KotlinPlugin(
                 PluginMain.logger.info("准备撤回群内消息！")
                 val recallmessage = cacheMessage[messageId]
                 if (recallmessage != null) {
+                    while (recallmessage.size != Mydata.groups.size) delay(10000L)
                     for (msg in recallmessage) {
                         launch {
                             val time: Long = (2L..15000L).random()
