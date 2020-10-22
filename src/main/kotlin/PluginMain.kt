@@ -17,6 +17,7 @@ import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Group
+import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.Listener
 import net.mamoe.mirai.event.events.MessageRecallEvent
 import net.mamoe.mirai.event.subscribeAlways
@@ -41,9 +42,10 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 103833821L
-    private val pwd = "qyxw0521"
+    private val BotId = 2026338927L
+    private val pwd = "QYXW2020"
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
+    private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
     @ConsoleExperimentalApi
     private val thisBot = MiraiConsole.addBot(BotId, pwd) {
@@ -97,6 +99,11 @@ object PluginMain : KotlinPlugin(
                             messageChainBuilder.add(it)
                         }
                         send(messageChainBuilder.asMessageChain(), bot, message.id)
+                        if (Data.MessageCnt[sender.id] == null) {
+                            Data.MessageCnt[sender.id] = 0
+                        } else {
+                            Data.MessageCnt[sender.id]!!.plus(1L)
+                        }
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
                     }
@@ -128,17 +135,20 @@ object PluginMain : KotlinPlugin(
         subscribeAlways<MessageRecallEvent.GroupRecall>(priority = Listener.EventPriority.HIGHEST) {
             if (authorId in Config.senderid && group.id == Config.originGroup) {
                 PluginMain.logger.info("准备撤回群内消息！")
-                val recallmessage = cacheMessage[messageId]
-                if (recallmessage != null) {
-                    while (recallmessage.size != Config.groups.size) delay(10000L)
-                    for (msg in recallmessage) {
-                        launch {
-                            val time: Long = (2L..15000L).random()
-                            delay(time)
-                            msg.recall()
-                        }
+                Data.MessageCnt[authorId]!!.minus(1)
+                var recallmessage = cacheMessage[messageId]
+                while (recallmessage == null || recallmessage.size != Config.groups.size) {
+                    delay(1000L)
+                    recallmessage = cacheMessage[messageId]
+                }
+                for (msg in recallmessage) {
+                    launch {
+                        val time: Long = (2L..15000L).random()
+                        delay(time)
+                        msg.recall()
                     }
                 }
+
             }
         }
     }
@@ -165,18 +175,23 @@ object PluginMain : KotlinPlugin(
     private fun timeAction() {
         launch {
             while (true) {
-                if (Data.date == SimpleDateFormat("yyyy-MM-dd")) {
-                    delay(3600000L)
+                if (date == SimpleDateFormat("yyyy-MM-dd").format((Date()))) {
+                    delay(600000L)
                     continue
                 }
-                Data.date = SimpleDateFormat("yyyy-MM-dd")
+                date = SimpleDateFormat("yyyy-MM-dd").format(Date())
                 thisBot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
                 delay(10000L)
                 cacheMessage.clear()
                 thisBot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
-                /*
-                统计劳模部分
-                 */
+                delay(4000L)
+                val maxId = Data.MessageCnt.maxByOrNull { it.value }
+                thisBot.getGroup(Config.originGroup).sendMessage(
+                    "今日的劳模是：${
+                        thisBot.getGroup(Config.originGroup).get(maxId!!.key).nameCardOrNick
+                    }，发送条数为${maxId.value}"
+                )
+                Data.MessageCnt.clear()
             }
         }
     }
@@ -191,6 +206,5 @@ object Config : AutoSavePluginConfig("Groups") {
 
 object Data : AutoSavePluginData("bot") {
     var cachesender by value(mutableSetOf<Long>())
-    var date by value(SimpleDateFormat("yyyy-MM-dd"))
-    var MessageCnt by value(mutableMapOf<Long, Int>())
+    var MessageCnt by value(mutableMapOf<Long, Long>())
 }
