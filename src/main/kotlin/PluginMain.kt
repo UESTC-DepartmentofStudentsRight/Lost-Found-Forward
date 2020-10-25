@@ -16,13 +16,11 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.console.util.ContactUtils.getContact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.nameCardOrNick
-import net.mamoe.mirai.event.Listener
+import net.mamoe.mirai.event.*
 import net.mamoe.mirai.event.events.MessageRecallEvent
-import net.mamoe.mirai.event.subscribeAlways
-import net.mamoe.mirai.event.subscribeGroupMessages
-import net.mamoe.mirai.event.subscribeTempMessages
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.message.recall
@@ -112,19 +110,45 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    @ConsoleExperimentalApi
     private fun Replytempmessage() {
         subscribeTempMessages() {
             always {
                 PluginMain.logger.info("接收到了一个临时会话")
                 val id: Long = sender.id
-                val group: Long = group.id
-                val tempset = Data.cachesender
-                if (group in Config.groups && id !in tempset) {
-                    launch {
-                        sender.sendMessage("小天使是自动转发的BOT, 这是一条自动回复消息，请找群里的其他管理员哦！")
-                        tempset.add(sender.id)
-                        if (tempset.size > 20)
-                            tempset.drop(1)
+                if (id in Data.messagecontact.values) {
+                    for (iter in Data.messagecontact) {
+                        if (iter.value == id) {
+                            bot.getFriend(iter.key).sendMessage(message)
+                        }
+                    }
+                } else {
+                    var flag = true
+                    while (flag) {
+                        for (Mem in Config.senderid) {
+                            if (Data.messagecontact[Mem] == null) {
+                                bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的^结束")
+                                bot.getFriend(Mem).sendMessage(message)
+                                Data.messagecontact[Mem] = id
+                                flag = false
+                                break
+                            }
+                        }
+                        if (flag)
+                            delay(3000L)
+                    }
+                }
+            }
+        }
+
+        subscribeFriendMessages {
+            always {
+                if (sender.id in Config.senderid) {
+                    if (message.contentToString()[0] == '^') {
+                        bot.getFriend(sender.id).sendMessage("已经结束此对话，可以接入下一个同学的失物招领！")
+                        Data.messagecontact.remove(sender.id)
+                    } else if (Data.messagecontact[sender.id] != null) {
+                        Data.messagecontact[sender.id]?.let { it1 -> bot.getContact(it1).sendMessage(message) }
                     }
                 }
             }
@@ -132,7 +156,7 @@ object PluginMain : KotlinPlugin(
     }
 
     private fun SubcribeRecall() {
-        subscribeAlways<MessageRecallEvent.GroupRecall>(priority = Listener.EventPriority.HIGHEST) {
+        subscribeAlways<MessageRecallEvent.GroupRecall> {
             if (authorId in Config.senderid && group.id == Config.originGroup) {
                 PluginMain.logger.info("准备撤回群内消息！")
                 Data.MessageCnt[authorId]!!.minus(1)
@@ -205,6 +229,6 @@ object Config : AutoSavePluginConfig("Groups") {
 }
 
 object Data : AutoSavePluginData("bot") {
-    var cachesender by value(mutableSetOf<Long>())
     var MessageCnt by value(mutableMapOf<Long, Long>())
+    var messagecontact by value(mutableMapOf<Long, Long>())
 }
