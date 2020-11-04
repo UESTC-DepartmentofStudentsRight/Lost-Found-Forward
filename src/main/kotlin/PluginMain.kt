@@ -45,6 +45,7 @@ object PluginMain : KotlinPlugin(
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
+
     @ConsoleExperimentalApi
     private val thisBot = MiraiConsole.addBot(BotId, pwd) {
         fileBasedDeviceInfo()
@@ -69,7 +70,10 @@ object PluginMain : KotlinPlugin(
         CommandRegister.commandUnregister()
         logger.error("插件卸载!")
     }
-
+    /**
+     *自动登录模块
+     *在[onEnable]时调用，可以自动登录机器人
+     */
     @ConsoleExperimentalApi
     fun autoLogin() {
         PluginMain.launch {
@@ -77,6 +81,13 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    /**
+     * 监听失物招领管理员群消息模块，可以在监听到新的消息后自动转发到失物招领群里边，其中：
+     * message.forEachContent为遍历所有消息内容[MessageContent]（有关消息元[MessageMetadata]与消息内容[MessageContent]
+     * 的区别与关系请见文档）
+     * 字符串处理将消息链[MessageChain]中的转发关键字符“#”删除后整体转发
+     * 若检测到#recall关键字，则撤回回复消息[QuoteReply]的消息源[MessageSource]所转发到失物招领群的消息 （见[msgRecall]）
+     */
 
     private fun ForwardtheMsg() {
         subscribeGroupMessages {
@@ -107,11 +118,17 @@ object PluginMain : KotlinPlugin(
                     } else if (message[QuoteReply] != null && message.contentToString().substring(0, "#recall".length) == "#recall") {
                         val msgID = message[QuoteReply]!!.source.id
                         msgRecall(msgID)
+                        Data.MessageCnt[sender.id] = Data.MessageCnt[sender.id]!!.minus(1)
+                        bot.getGroup(originGroup).sendMessage("失物招领已撤回")
                     }
                 }
             }
         }
     }
+
+    /**
+     * 自动转发找机器人的临时消息，文档撰写ing
+     */
 
     @ConsoleExperimentalApi
     private fun Replytempmessage() {
@@ -143,6 +160,9 @@ object PluginMain : KotlinPlugin(
                 }
             }
         }
+        /**
+         * 自动转发管理员回复的临时消息内容，文档撰写ing
+         */
 
         subscribeFriendMessages {
             always {
@@ -158,6 +178,9 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    /**
+     *监听撤回消息（用于两分钟以内的消息）
+     */
     private fun SubcribeRecall() {
         subscribeAlways<MessageRecallEvent.GroupRecall> {
             if (authorId in Config.senderid && group.id == Config.originGroup) {
@@ -168,6 +191,10 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    /**
+     * 将记录在[cacheMessage]内的消息回执[MessageReceipt]逐个执行[MessageReceipt.recall]，
+     * 从而撤回所有失物招领群内的本条失物招领
+     */
     private suspend fun msgRecall(messageID: Int) {
         var recallmessage = cacheMessage[messageID]
         while (recallmessage == null || recallmessage.size != Config.groups.size) {
@@ -183,7 +210,9 @@ object PluginMain : KotlinPlugin(
         }
     }
 
-
+    /**
+     * 将失物招领由管理员群[Config.originGroup]转发到失物招领群[Config.groups]内
+     */
     private fun send(messagechain: MessageChain, bot: Bot, messageID: Int) {
         val groups = Config.groups
         val cnt = AtomicInteger(0)
@@ -201,6 +230,9 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    /**
+     * 每日清理消息回执[MessageReceipt]以及劳模统计
+     */
     @ConsoleExperimentalApi
     private fun timeAction() {
         launch {
@@ -241,13 +273,31 @@ object PluginMain : KotlinPlugin(
 }
 
 object Config : AutoSavePluginConfig("Groups") {
+    /**
+     * 失物招领管理员群[groups]
+     */
     var groups: MutableSet<Long> by value(mutableSetOf<Long>())
+
+    /**
+     * 失物招领管理员[senderid]
+     */
     var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
+
+    /**
+     * 失物招领管理员群[originGroup]
+     */
     var originGroup: Long by value(445786154L)
     var botId: Long by value(2026338927L)
 }
 
 object Data : AutoSavePluginData("bot") {
+    /**
+     * 转发的失物招领条数[MessageCnt]
+     */
     var MessageCnt by value(mutableMapOf<Long, Long>())
+
+    /**
+     * 失物招领对话记录[messagecontact]
+     */
     var messagecontact by value(mutableMapOf<Long, Long>())
 }
