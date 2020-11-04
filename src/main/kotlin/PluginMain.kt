@@ -5,7 +5,6 @@ package org.Reforward.mirai.plugin
 
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.alsoLogin
@@ -105,6 +104,9 @@ object PluginMain : KotlinPlugin(
                         }
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
+                    } else if (message[QuoteReply] != null && message.contentToString().substring(0, "#recall".length) == "#recall") {
+                        val msgID = message[QuoteReply]!!.source.id
+                        msgRecall(msgID)
                     }
                 }
             }
@@ -161,19 +163,22 @@ object PluginMain : KotlinPlugin(
             if (authorId in Config.senderid && group.id == Config.originGroup) {
                 PluginMain.logger.info("准备撤回群内消息！")
                 Data.MessageCnt[authorId] = Data.MessageCnt[authorId]!!.minus(1)
-                var recallmessage = cacheMessage[messageId]
-                while (recallmessage == null || recallmessage.size != Config.groups.size) {
-                    delay(1000L)
-                    recallmessage = cacheMessage[messageId]
-                }
-                for (msg in recallmessage) {
-                    launch {
-                        val time: Long = (2L..15000L).random()
-                        delay(time)
-                        msg.recall()
-                    }
-                }
+                msgRecall(messageId)
+            }
+        }
+    }
 
+    private suspend fun msgRecall(messageID: Int) {
+        var recallmessage = cacheMessage[messageID]
+        while (recallmessage == null || recallmessage.size != Config.groups.size) {
+            delay(1000L)
+            recallmessage = cacheMessage[messageID]
+        }
+        for (msg in recallmessage) {
+            launch {
+                val time: Long = (2L..15000L).random()
+                delay(time)
+                msg.recall()
             }
         }
     }
