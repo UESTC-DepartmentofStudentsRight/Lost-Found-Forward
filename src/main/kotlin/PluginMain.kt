@@ -5,6 +5,7 @@ package org.Reforward.mirai.plugin
 
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.alsoLogin
@@ -100,7 +101,7 @@ object PluginMain : KotlinPlugin(
                         if (Data.MessageCnt[sender.id] == null) {
                             Data.MessageCnt[sender.id] = 0
                         } else {
-                            Data.MessageCnt[sender.id]!!.plus(1L)
+                            Data.MessageCnt[sender.id] = Data.MessageCnt[sender.id]!!.plus(1L)
                         }
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
@@ -159,7 +160,7 @@ object PluginMain : KotlinPlugin(
         subscribeAlways<MessageRecallEvent.GroupRecall> {
             if (authorId in Config.senderid && group.id == Config.originGroup) {
                 PluginMain.logger.info("准备撤回群内消息！")
-                Data.MessageCnt[authorId]!!.minus(1)
+                Data.MessageCnt[authorId] = Data.MessageCnt[authorId]!!.minus(1)
                 var recallmessage = cacheMessage[messageId]
                 while (recallmessage == null || recallmessage.size != Config.groups.size) {
                     delay(1000L)
