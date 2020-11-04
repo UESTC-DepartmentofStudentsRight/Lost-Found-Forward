@@ -209,12 +209,25 @@ object PluginMain : KotlinPlugin(
                 cacheMessage.clear()
                 thisBot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
                 delay(4000L)
-                val maxId = Data.MessageCnt.maxByOrNull { it.value }
+                val tot = mutableMapOf<Long, Long>()
+                var flag = 0L
+                for(it in Data.MessageCnt) {
+                    if (it.value > flag) {
+                        flag = it.value
+                        tot.clear()
+                        tot[it.key] = it.value
+                    } else if(it.value == flag) {
+                        tot[it.key] = it.value
+                    }
+
+                }
                 thisBot.getGroup(Config.originGroup).sendMessage(
-                    "今日的劳模是：${
-                        thisBot.getGroup(Config.originGroup).get(maxId!!.key).nameCardOrNick
-                    }，发送条数为${maxId.value}"
+                    "今日的劳模是:"
                 )
+                for(it in tot) {
+                    val sender = thisBot.getFriend(it.key)
+                    thisBot.getGroup(Config.originGroup).sendMessage("${sender.nameCardOrNick}, 条数共${it.value}条")
+                }
                 Data.MessageCnt.clear()
             }
         }
