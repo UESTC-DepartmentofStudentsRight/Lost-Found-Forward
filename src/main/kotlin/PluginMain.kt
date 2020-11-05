@@ -109,16 +109,19 @@ object PluginMain : KotlinPlugin(
                         }
                         send(messageChainBuilder.asMessageChain(), bot, message.id)
                         if (Data.MessageCnt[sender.id] == null) {
-                            Data.MessageCnt[sender.id] = 0
+                            Data.MessageCnt[sender.id] = mutableSetOf()
                         } else {
-                            Data.MessageCnt[sender.id] = Data.MessageCnt[sender.id]!!.plus(1L)
+                           Data.MessageCnt[sender.id]!!.add(message.id)
                         }
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
                     } else if (message[QuoteReply] != null && message.contentToString().substring(0, "#recall".length) == "#recall") {
+                        val cnt = Data.MessageCnt[sender.id]
+                        //如果不是本人发送的，则不处理
+                        cnt?.contains(message[QuoteReply]!!.source.id) ?: return@always
                         val msgID = message[QuoteReply]!!.source.id
                         msgRecall(msgID)
-                        Data.MessageCnt[sender.id] = Data.MessageCnt[sender.id]!!.minus(1)
+                        Data.MessageCnt[sender.id]!!.remove(message.id)
                         bot.getGroup(originGroup).sendMessage("失物招领已撤回")
                     }
                 }
@@ -185,7 +188,7 @@ object PluginMain : KotlinPlugin(
         subscribeAlways<MessageRecallEvent.GroupRecall> {
             if (authorId in Config.senderid && group.id == Config.originGroup) {
                 PluginMain.logger.info("准备撤回群内消息！")
-                Data.MessageCnt[authorId] = Data.MessageCnt[authorId]!!.minus(1)
+                Data.MessageCnt[authorId]!!.remove(messageId)
                 msgRecall(messageId)
             }
         }
@@ -247,15 +250,15 @@ object PluginMain : KotlinPlugin(
                 cacheMessage.clear()
                 thisBot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
                 delay(4000L)
-                val tot = mutableMapOf<Long, Long>()
-                var flag = 0L
+                val tot = mutableMapOf<Long, Int>()
+                var flag = 0
                 for(it in Data.MessageCnt) {
-                    if (it.value > flag) {
-                        flag = it.value
+                    if (it.value.size > flag) {
+                        flag = it.value.size
                         tot.clear()
-                        tot[it.key] = it.value
-                    } else if(it.value == flag) {
-                        tot[it.key] = it.value
+                        tot[it.key] = it.value.size
+                    } else if(it.value.size == flag) {
+                        tot[it.key] = it.value.size
                     }
 
                 }
@@ -294,7 +297,7 @@ object Data : AutoSavePluginData("bot") {
     /**
      * 转发的失物招领条数[MessageCnt]
      */
-    var MessageCnt by value(mutableMapOf<Long, Long>())
+    var MessageCnt by value(mutableMapOf<Long, MutableSet<Int>>())
 
     /**
      * 失物招领对话记录[messagecontact]
