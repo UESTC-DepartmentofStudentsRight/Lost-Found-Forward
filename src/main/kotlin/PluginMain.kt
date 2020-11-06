@@ -58,7 +58,7 @@ object PluginMain : KotlinPlugin(
         Config.reload()
         CommandRegister.commandRegister()
         ForwardtheMsg()
-        NowReplytempmessage()
+        Replytempmessage()
         SubcribeRecall()
         autoLogin()
         timeAction()
@@ -136,20 +136,6 @@ object PluginMain : KotlinPlugin(
     }
 
 
-    private fun NowReplytempmessage() {
-        subscribeTempMessages {
-            always {
-                PluginMain.logger.info("接收到了一个临时会话")
-                val id: Long = sender.id
-                if(id !in Data.tempmessagecnt) {
-                    sender.sendMessage("小天使是一个BOT，如有需要请找其他管理员哦！")
-                    if(Data.tempmessagecnt.size > 100)
-                        Data.tempmessagecnt.drop(1)
-                    Data.tempmessagecnt.add(id)
-                }
-            }
-        }
-    }
 
     /**
      * 还在调试中的功能，暂未启用
@@ -172,8 +158,10 @@ object PluginMain : KotlinPlugin(
                     while (flag) {
                         for (Mem in Config.senderid) {
                             if (Data.messagecontact[Mem] == null) {
-                                bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的^结束")
+                                bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
                                 bot.getFriend(Mem).sendMessage(message)
+                                sender.sendMessage("小天使是一个bot，本条消息将转发给其他管理员" +
+                                    "如果方便的化，请直接找其他管理员，谢谢！")
                                 Data.messagecontact[Mem] = id
                                 flag = false
                                 break
@@ -327,8 +315,4 @@ object Data : AutoSavePluginData("bot") {
      */
     var messagecontact by value(mutableMapOf<Long, Long>())
 
-    /**
-     *临时的临时消息回复记忆，将被删除
-     */
-    var tempmessagecnt by value(mutableSetOf<Long>())
 }
