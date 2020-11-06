@@ -27,6 +27,7 @@ import net.mamoe.mirai.message.recall
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.regex.Pattern
 
 
 val PluginID = "org.Reforward.mirai-plugin"
@@ -40,8 +41,8 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 2026338927L
-    private val pwd = "QYXW2020"
+    private val BotId = 103833821L
+    private val pwd = "qyxw0521"
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
@@ -111,11 +112,16 @@ object PluginMain : KotlinPlugin(
                         if (Data.MessageCnt[sender.id] == null) {
                             Data.MessageCnt[sender.id] = mutableSetOf()
                         } else {
-                           Data.MessageCnt[sender.id]!!.add(message.id)
+                            Data.MessageCnt[sender.id]!!.add(message.id)
+                            logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                         }
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
-                    } else if (message[QuoteReply] != null && message.contentToString().substring(0, "#recall".length) == "#recall") {
+                    } else if (message[QuoteReply] != null && Pattern.matches(
+                            ".*#recall.*",
+                            message[PlainText].toString(),
+                        )
+                    ) {
                         val cnt = Data.MessageCnt[sender.id]
                         //如果不是本人发送的，则不处理
                         cnt?.contains(message[QuoteReply]!!.source.id) ?: return@always
@@ -123,6 +129,7 @@ object PluginMain : KotlinPlugin(
                         msgRecall(msgID)
                         Data.MessageCnt[sender.id]!!.remove(message.id)
                         bot.getGroup(originGroup).sendMessage("失物招领已撤回")
+                        logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                     }
                 }
             }
