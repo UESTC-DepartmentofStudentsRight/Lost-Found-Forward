@@ -30,7 +30,7 @@ import java.util.regex.Pattern
 
 
 val PluginID = "org.Reforward.mirai-plugin"
-val PluginVersion = "0.0.8"
+val PluginVersion = "0.14.0"
 
 
 @AutoService(KotlinPlugin::class)
@@ -40,8 +40,8 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 103833821L
-    private val pwd = "qyxw0521"
+    private val BotId = 2026338927L
+    private val pwd = "QYXW2020"
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
@@ -57,8 +57,8 @@ object PluginMain : KotlinPlugin(
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Config.reload()
         CommandRegister.commandRegister()
-        ForwardtheMsg()
-        Replytempmessage()
+        forwardMsg()
+        replyTempMsg()
         SubcribeRecall()
         autoLogin()
         timeAction()
@@ -70,6 +70,7 @@ object PluginMain : KotlinPlugin(
         CommandRegister.commandUnregister()
         logger.error("插件卸载!")
     }
+
     /**
      *自动登录模块
      *在[onEnable]时调用，可以自动登录机器人
@@ -83,13 +84,12 @@ object PluginMain : KotlinPlugin(
 
     /**
      * 监听失物招领管理员群消息模块，可以在监听到新的消息后自动转发到失物招领群里边，其中：
-     * message.forEachContent为遍历所有消息内容[MessageContent]（有关消息元[MessageMetadata]与消息内容[MessageContent]
-     * 的区别与关系请见文档）
+     * message.forEachContent为遍历所有消息内容[MessageContent]（有关消息元[MessageMetadata]与消息内容[MessageContent]的区别与关系请见文档）
      * 字符串处理将消息链[MessageChain]中的转发关键字符“#”删除后整体转发
      * 若检测到#recall关键字，则撤回回复消息[QuoteReply]的消息源[MessageSource]所转发到失物招领群的消息 （见[msgRecall]）
      */
 
-    private fun ForwardtheMsg() {
+    private fun forwardMsg() {
         subscribeGroupMessages {
             always {
                 PluginMain.logger.info("接收到了新的消息！")
@@ -136,13 +136,8 @@ object PluginMain : KotlinPlugin(
     }
 
 
-
-    /**
-     * 还在调试中的功能，暂未启用
-     */
-
     @ConsoleExperimentalApi
-    private fun Replytempmessage() {
+    private fun replyTempMsg() {
         subscribeTempMessages() {
             always {
                 PluginMain.logger.info("接收到了一个临时会话")
@@ -155,13 +150,17 @@ object PluginMain : KotlinPlugin(
                     }
                 } else {
                     var flag = true
+                    val newOrderSender =
+                        Collections.synchronizedList(Config.senderid.sortedBy { Data.MessageCnt[it]?.size ?: 0 })
                     while (flag) {
-                        for (Mem in Config.senderid) {
+                        for (Mem in newOrderSender) {
                             if (Data.messagecontact[Mem] == null) {
+                                sender.sendMessage(
+                                    "小天使是一个bot，本条消息将转发给其他管理员\n" +
+                                        "如果方便的话，请直接找其他管理员，谢谢！"
+                                )
                                 bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
                                 bot.getFriend(Mem).sendMessage(message)
-                                sender.sendMessage("小天使是一个bot，本条消息将转发给其他管理员" +
-                                    "如果方便的化，请直接找其他管理员，谢谢！")
                                 Data.messagecontact[Mem] = id
                                 flag = false
                                 break
@@ -179,13 +178,27 @@ object PluginMain : KotlinPlugin(
 
         subscribeFriendMessages {
             always {
-                if (sender.id in Config.senderid) {
+                if (sender.id in Config.senderid && Data.messagecontact[sender.id] != null) {
+                    val receiver = bot.groups.asSequence().flatMap { it.members.asSequence() }
+                        .firstOrNull { it.id == Data.messagecontact[sender.id] }
+                    //超时自动断开
                     if (message.contentToString() == "#stop") {
                         bot.getFriend(sender.id).sendMessage("已经结束此对话，可以接入下一个同学的失物招领！")
+                        receiver?.sendMessage("管理员已经断开会话，如果有需要请继续发消息，会为同学转接新的管理员！")
                         Data.messagecontact.remove(sender.id)
-                    } else if (Data.messagecontact[sender.id] != null) {
-                        val receiver = bot.groups.asSequence().flatMap { it.members.asSequence() }.firstOrNull { it.id == Data.messagecontact[sender.id]}
-                        receiver!!.sendMessage(message)
+                        return@always
+                    }
+                    receiver!!.sendMessage(message)
+                    Data.TimeCounter[sender.id] = System.currentTimeMillis()
+                    launch {
+                        delay(900000)
+                        if (System.currentTimeMillis() - (Data.TimeCounter[sender.id]
+                                ?: 0L) >= 890000 && Data.messagecontact[sender.id] != null
+                        ) {
+                            receiver.sendMessage("已超时，已经自动断开与管理员的通话，同学有需要可以再次发消息，会给您分配新的管理员")
+                            sender.sendMessage("与同学的通话已经断开！")
+                            Data.messagecontact.remove(sender.id)
+                        }
                     }
                 }
             }
@@ -263,12 +276,12 @@ object PluginMain : KotlinPlugin(
                 delay(4000L)
                 val tot = mutableMapOf<Long, Int>()
                 var flag = 0
-                for(it in Data.MessageCnt) {
+                for (it in Data.MessageCnt) {
                     if (it.value.size > flag) {
                         flag = it.value.size
                         tot.clear()
                         tot[it.key] = it.value.size
-                    } else if(it.value.size == flag) {
+                    } else if (it.value.size == flag) {
                         tot[it.key] = it.value.size
                     }
 
@@ -276,7 +289,7 @@ object PluginMain : KotlinPlugin(
                 thisBot.getGroup(Config.originGroup).sendMessage(
                     "今日的劳模是:"
                 )
-                for(it in tot) {
+                for (it in tot) {
                     val sender = thisBot.getFriend(it.key)
                     thisBot.getGroup(Config.originGroup).sendMessage("${sender.nameCardOrNick}, 条数共${it.value}条")
                 }
@@ -314,5 +327,10 @@ object Data : AutoSavePluginData("bot") {
      * 失物招领对话记录[messagecontact]
      */
     var messagecontact by value(mutableMapOf<Long, Long>())
+
+    /**
+     *管理员对话超时计时
+     */
+    var TimeCounter by value(mutableMapOf<Long, Long>())
 
 }
