@@ -16,7 +16,6 @@ import net.mamoe.mirai.console.data.AutoSavePluginConfig
 import net.mamoe.mirai.console.data.AutoSavePluginData
 import net.mamoe.mirai.console.data.value
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
-import net.mamoe.mirai.console.util.ContactUtils.getContact
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.*
@@ -193,11 +192,12 @@ object PluginMain : KotlinPlugin(
         subscribeFriendMessages {
             always {
                 if (sender.id in Config.senderid) {
-                    if (message.contentToString()[0] == '^') {
+                    if (message.contentToString() == "#stop") {
                         bot.getFriend(sender.id).sendMessage("已经结束此对话，可以接入下一个同学的失物招领！")
                         Data.messagecontact.remove(sender.id)
                     } else if (Data.messagecontact[sender.id] != null) {
-                        Data.messagecontact[sender.id]?.let { it1 -> bot.getContact(it1).sendMessage(message) }
+                        val receiver = bot.groups.asSequence().flatMap { it.members.asSequence() }.firstOrNull { it.id == Data.messagecontact[sender.id]}
+                        receiver!!.sendMessage(message)
                     }
                 }
             }
