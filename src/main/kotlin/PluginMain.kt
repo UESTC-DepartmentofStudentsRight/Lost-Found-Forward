@@ -59,7 +59,7 @@ object PluginMain : KotlinPlugin(
         Config.reload()
         CommandRegister.commandRegister()
         ForwardtheMsg()
-        Replytempmessage()
+        NowReplytempmessage()
         SubcribeRecall()
         autoLogin()
         timeAction()
@@ -136,8 +136,24 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+
+    private fun NowReplytempmessage() {
+        subscribeTempMessages {
+            always {
+                PluginMain.logger.info("接收到了一个临时会话")
+                val id: Long = sender.id
+                if(id !in Data.tempmessagecnt) {
+                    sender.sendMessage("小天使是一个BOT，如有需要请找其他管理员哦！")
+                    if(Data.tempmessagecnt.size > 100)
+                        Data.tempmessagecnt.drop(1)
+                    Data.tempmessagecnt.add(id)
+                }
+            }
+        }
+    }
+
     /**
-     * 自动转发找机器人的临时消息，文档撰写ing
+     * 还在调试中的功能，暂未启用
      */
 
     @ConsoleExperimentalApi
@@ -310,4 +326,9 @@ object Data : AutoSavePluginData("bot") {
      * 失物招领对话记录[messagecontact]
      */
     var messagecontact by value(mutableMapOf<Long, Long>())
+
+    /**
+     *临时的临时消息回复记忆，将被删除
+     */
+    var tempmessagecnt by value(mutableSetOf<Long>())
 }
