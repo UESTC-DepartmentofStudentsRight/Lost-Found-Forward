@@ -155,8 +155,7 @@ object PluginMain : KotlinPlugin(
                         for (Mem in newOrderSender) {
                             if (Data.messagecontact[Mem] == null) {
                                 sender.sendMessage(
-                                    "小天使是一个bot，本条消息将转发给其他管理员\n" +
-                                        "如果方便的话，请直接找其他管理员，谢谢！"
+                                    "正在为同学接入管理员，请稍后"
                                 )
                                 bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
                                 bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
