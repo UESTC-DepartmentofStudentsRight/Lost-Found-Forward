@@ -159,6 +159,7 @@ object PluginMain : KotlinPlugin(
                                     "小天使是一个bot，本条消息将转发给其他管理员\n" +
                                         "如果方便的话，请直接找其他管理员，谢谢！"
                                 )
+                                bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
                                 bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
                                 bot.getFriend(Mem).sendMessage(message)
                                 Data.messagecontact[Mem] = id
@@ -181,7 +182,6 @@ object PluginMain : KotlinPlugin(
                 if (sender.id in Config.senderid && Data.messagecontact[sender.id] != null) {
                     val receiver = bot.groups.asSequence().flatMap { it.members.asSequence() }
                         .firstOrNull { it.id == Data.messagecontact[sender.id] }
-                    //超时自动断开
                     if (message.contentToString() == "#stop") {
                         bot.getFriend(sender.id).sendMessage("已经结束此对话，可以接入下一个同学的失物招领！")
                         receiver?.sendMessage("管理员已经断开会话，如果有需要请继续发消息，会为同学转接新的管理员！")
@@ -189,17 +189,6 @@ object PluginMain : KotlinPlugin(
                         return@always
                     }
                     receiver!!.sendMessage(message)
-                    Data.TimeCounter[sender.id] = System.currentTimeMillis()
-                    launch {
-                        delay(900000)
-                        if (System.currentTimeMillis() - (Data.TimeCounter[sender.id]
-                                ?: 0L) >= 890000 && Data.messagecontact[sender.id] != null
-                        ) {
-                            receiver.sendMessage("已超时，已经自动断开与管理员的通话，同学有需要可以再次发消息，会给您分配新的管理员")
-                            sender.sendMessage("与同学的通话已经断开！")
-                            Data.messagecontact.remove(sender.id)
-                        }
-                    }
                 }
             }
         }
@@ -328,9 +317,5 @@ object Data : AutoSavePluginData("bot") {
      */
     var messagecontact by value(mutableMapOf<Long, Long>())
 
-    /**
-     *管理员对话超时计时
-     */
-    var TimeCounter by value(mutableMapOf<Long, Long>())
 
 }
