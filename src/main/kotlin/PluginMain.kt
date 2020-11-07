@@ -161,6 +161,7 @@ object PluginMain : KotlinPlugin(
                                 bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
                                 bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
                                 bot.getFriend(Mem).sendMessage(message)
+                                sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
                                 Data.messagecontact[Mem] = id
                                 flag = false
                                 break
