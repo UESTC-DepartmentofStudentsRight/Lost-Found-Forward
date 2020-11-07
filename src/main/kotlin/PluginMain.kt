@@ -110,10 +110,9 @@ object PluginMain : KotlinPlugin(
                         send(messageChainBuilder.asMessageChain(), bot, message.id)
                         if (Data.MessageCnt[sender.id] == null) {
                             Data.MessageCnt[sender.id] = mutableSetOf()
-                        } else {
-                            Data.MessageCnt[sender.id]!!.add(message.id)
-                            logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                         }
+                        Data.MessageCnt[sender.id]!!.add(message.id)
+                        logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                         bot.getGroup(originGroup).sendMessage("失物招领已转发！")
                         return@always
                     } else if (message[QuoteReply] != null && Pattern.matches(
