@@ -139,35 +139,37 @@ object PluginMain : KotlinPlugin(
     private fun replyTempMsg() {
         subscribeTempMessages() {
             always {
-                PluginMain.logger.info("接收到了一个临时会话")
-                val id: Long = sender.id
-                if (id in Data.messagecontact.values) {
-                    for (iter in Data.messagecontact) {
-                        if (iter.value == id) {
-                            bot.getFriend(iter.key).sendMessage(message)
-                        }
-                    }
-                } else {
-                    var flag = true
-                    val newOrderSender =
-                        Collections.synchronizedList(Config.senderid.sortedBy { Data.MessageCnt[it]?.size ?: 0 })
-                    while (flag) {
-                        for (Mem in newOrderSender) {
-                            if (Data.messagecontact[Mem] == null) {
-                                sender.sendMessage(
-                                    "正在为同学接入管理员，请稍后"
-                                )
-                                bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
-                                bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
-                                bot.getFriend(Mem).sendMessage(message)
-                                sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
-                                Data.messagecontact[Mem] = id
-                                flag = false
-                                break
+                if (group.id in Config.groups) {
+                    PluginMain.logger.info("接收到了一个临时会话")
+                    val id: Long = sender.id
+                    if (id in Data.messagecontact.values) {
+                        for (iter in Data.messagecontact) {
+                            if (iter.value == id) {
+                                bot.getFriend(iter.key).sendMessage(message)
                             }
                         }
-                        if (flag)
-                            delay(3000L)
+                    } else {
+                        var flag = true
+                        val newOrderSender =
+                            Collections.synchronizedList(Config.senderid.sortedBy { Data.MessageCnt[it]?.size ?: 0 })
+                        while (flag) {
+                            for (Mem in newOrderSender) {
+                                if (Data.messagecontact[Mem] == null) {
+                                    sender.sendMessage(
+                                        "正在为同学接入管理员，请稍后"
+                                    )
+                                    bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
+                                    bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
+                                    bot.getFriend(Mem).sendMessage(message)
+                                    sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
+                                    Data.messagecontact[Mem] = id
+                                    flag = false
+                                    break
+                                }
+                            }
+                            if (flag)
+                                delay(3000L)
+                        }
                     }
                 }
             }
@@ -198,7 +200,7 @@ object PluginMain : KotlinPlugin(
      */
     private fun SubcribeRecall() {
         subscribeAlways<MessageRecallEvent.GroupRecall> {
-            if (authorId in Config.senderid && group.id == Config.originGroup) {
+            if (authorId in Config.senderid && group.id == Config.originGroup && Data.MessageCnt[authorId] != null) {
                 PluginMain.logger.info("准备撤回群内消息！")
                 Data.MessageCnt[authorId]!!.remove(messageId)
                 msgRecall(messageId)
@@ -218,7 +220,7 @@ object PluginMain : KotlinPlugin(
         }
         for (msg in recallmessage) {
             launch {
-                val time: Long = (2L..15000L).random()
+                val time: Long = (2000L..15000L).random()
                 delay(time)
                 msg.recall()
             }
@@ -234,7 +236,7 @@ object PluginMain : KotlinPlugin(
         val cacheReceipt = Collections.synchronizedSet(mutableSetOf<MessageReceipt<Group>>())
         for (id: Long in groups) {
             launch {
-                val time: Long = (2L..15000L).random()
+                val time: Long = (2000L..15000L).random()
                 delay(time)
                 cnt.incrementAndGet()
                 cacheReceipt.add(bot.getGroup(id).sendMessage(messagechain))
