@@ -99,7 +99,7 @@ object PluginMain : KotlinPlugin(
                 if (id == originGroup && sender.id in Config.senderid) {
                     //logger.info("准备发送")
                     val messageChainBuilder = MessageChainBuilder()
-                    if (message.contentToString()[0] == '#' && message.contentToString().length > 1) {
+                    if (message[QuoteReply] == null && message.contentToString()[0] == '#' && message.contentToString().length > 1) {
                         message.forEachContent {
                             if (it is PlainText) {
                                 messageChainBuilder.add(it.content.replaceFirst("#".toRegex(), ""))
@@ -117,7 +117,7 @@ object PluginMain : KotlinPlugin(
                         return@always
                     } else if (message[QuoteReply] != null && Pattern.matches(
                             ".*#recall.*",
-                            message[PlainText].toString(),
+                            message[PlainText].toString()
                         )
                     ) {
                         val cnt = Data.MessageCnt[sender.id]
