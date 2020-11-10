@@ -40,14 +40,12 @@ object PluginMain : KotlinPlugin(
         version = PluginVersion
     )
 ) {
-    private val BotId = 2026338927L
-    private val pwd = "QYXW2020"
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
 
     @ConsoleExperimentalApi
-    private val thisBot = MiraiConsole.addBot(BotId, pwd) {
+    private val thisBot = MiraiConsole.addBot(Config.botId, Config.botPwd) {
         fileBasedDeviceInfo()
     }
 
@@ -76,11 +74,9 @@ object PluginMain : KotlinPlugin(
      *在[onEnable]时调用，可以自动登录机器人
      */
     @ConsoleExperimentalApi
-    fun autoLogin() {
-        PluginMain.launch {
-
+    suspend fun autoLogin() {
+        if (Config.botId != null && Config.botPwd != null)
             thisBot.alsoLogin()
-        }
     }
 
     /**
@@ -310,8 +306,17 @@ object Config : AutoSavePluginConfig("Groups") {
     /**
      * 失物招领管理员群[originGroup]
      */
-    var originGroup: Long by value(445786154L)
-    var botId: Long by value(2026338927L)
+    var originGroup: Long by value<Long>()
+
+    /**
+     * 机器人QQ号
+     */
+    var botId: Long by value<Long>()
+
+    /**
+     * 机器人密码
+     */
+    var botPwd: String by value<Long>()
 }
 
 object Data : AutoSavePluginData("bot") {

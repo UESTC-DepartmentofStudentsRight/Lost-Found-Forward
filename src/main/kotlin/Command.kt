@@ -22,6 +22,7 @@ object CommandRegister {
         ShowAllSenderId.register()
         ChangeOriginGroup.register()
         ShowOriginGroup.register()
+        ChangeBotId.register()
     }
 
     internal fun commandUnregister() {
@@ -35,6 +36,7 @@ object CommandRegister {
         ShowAllSenderId.unregister()
         ChangeOriginGroup.unregister()
         ShowOriginGroup.unregister()
+        ChangeBotId.unregister()
     }
 }
 
@@ -184,5 +186,16 @@ object ShowOriginGroup : SimpleCommand(
     @Handler
     fun CommandSender.ShowOriginGroup() {
         PluginMain.logger.info("当前失物招领管理员群为: ${Config.originGroup}")
+    }
+}
+
+object ChangeBotId : SimpleCommand(
+    PluginMain, "ChangeBotId",
+    description = "更改机器人的QQ号和密码"
+) {
+    @Handler
+    fun CommandSender.ChangeBotId(BotID: Long, BotPwd: String) {
+        Config.botId = BotID
+        Config.botPwd = BotPwd
     }
 }
