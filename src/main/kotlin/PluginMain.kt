@@ -78,6 +78,7 @@ object PluginMain : KotlinPlugin(
     @ConsoleExperimentalApi
     fun autoLogin() {
         PluginMain.launch {
+
             thisBot.alsoLogin()
         }
     }

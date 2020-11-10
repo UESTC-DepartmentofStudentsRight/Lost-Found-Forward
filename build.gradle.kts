@@ -3,12 +3,12 @@ plugins {
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
     kotlin("kapt") version kotlinVersion
-    id("net.mamoe.mirai-console") version "1.0-RC-dev-28"
+    id("net.mamoe.mirai-console") version "1.0-RC-1"
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
 group = "org.Reforward"
-version = "0.0.7"
+version = "0.14.7"
 
 dependencies {
     val autoService = "1.0-rc7"
