@@ -93,12 +93,10 @@ object PluginMain : KotlinPlugin(
     private fun forwardMsg() {
         subscribeGroupMessages {
             always {
-                PluginMain.logger.info("接收到了新的消息！")
+                logger.verbose("接收到了新的消息！")
                 val id: Long = group.id
                 val originGroup: Long = Config.originGroup
-                //logger.info("id = ${id}, oringinGroup = ${originGroup}")
                 if (id == originGroup && sender.id in Config.senderid) {
-                    //logger.info("准备发送")
                     val messageChainBuilder = MessageChainBuilder()
                     if (message[QuoteReply] == null && message.contentToString()[0] == '#' && message.contentToString().length > 1) {
                         message.forEachContent {
@@ -141,7 +139,7 @@ object PluginMain : KotlinPlugin(
         subscribeTempMessages() {
             always {
                 if (group.id in Config.groups) {
-                    PluginMain.logger.info("接收到了一个临时会话")
+                    logger.verbose("接收到了一个临时会话")
                     val id: Long = sender.id
                     if (id in Data.messagecontact.values) {
                         for (iter in Data.messagecontact) {
@@ -197,7 +195,7 @@ object PluginMain : KotlinPlugin(
                         Data.messagecontact.remove(sender.id)
                         return@always
                     }
-                    PluginMain.logger.info("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id).nameCardOrNick}")
+                    logger.info("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id).nameCardOrNick}")
                     receiver.sendMessage(message)
                 }
             }
@@ -211,7 +209,6 @@ object PluginMain : KotlinPlugin(
         subscribeAlways<MessageRecallEvent.GroupRecall> {
             if (authorId in Config.senderid && group.id == Config.originGroup && Data.MessageCnt[authorId] != null) {
                 PluginMain.logger.info("准备撤回群内消息！")
-                bot.getGroup(Config.originGroup).sendMessage("失物招领已撤回")
                 Data.MessageCnt[authorId]!!.remove(messageId)
                 msgRecall(messageId)
             }
