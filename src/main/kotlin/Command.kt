@@ -190,12 +190,13 @@ object ShowOriginGroup : SimpleCommand(
 }
 
 object ChangeBotId : SimpleCommand(
-    PluginMain, "ChangeBotId",
+    PluginMain, "ChangeBot",
     description = "更改机器人的QQ号和密码"
 ) {
     @Handler
-    fun CommandSender.ChangeBotId(BotID: Long, BotPwd: String) {
+    fun CommandSender.ChangeBot(BotID: Long, BotPwd: String) {
         Config.botId = BotID
         Config.botPwd = BotPwd
+        PluginMain.logger.info("账号为${BotID}, 密码为${BotPwd}Desu!")
     }
 }

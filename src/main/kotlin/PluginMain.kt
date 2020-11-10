@@ -30,7 +30,9 @@ import java.util.regex.Pattern
 
 
 val PluginID = "org.Reforward.mirai-plugin"
-val PluginVersion = "0.14.0"
+val PluginVersion = "0.15.0"
+val DefaultBotID = 0L
+val DefaultBotPwd = ""
 
 
 @AutoService(KotlinPlugin::class)
@@ -44,11 +46,6 @@ object PluginMain : KotlinPlugin(
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
 
-    @ConsoleExperimentalApi
-    private val thisBot = MiraiConsole.addBot(Config.botId, Config.botPwd) {
-        fileBasedDeviceInfo()
-    }
-
 
     @ConsoleExperimentalApi
     override fun onEnable() {
@@ -58,9 +55,9 @@ object PluginMain : KotlinPlugin(
         forwardMsg()
         replyTempMsg()
         SubcribeRecall()
-        autoLogin()
-        timeAction()
-        Config.botId = BotId
+        PluginMain.launch {
+            autoLogin()?.let { timeAction(it) }
+        }
     }
 
     override fun onDisable() {
@@ -74,9 +71,11 @@ object PluginMain : KotlinPlugin(
      *在[onEnable]时调用，可以自动登录机器人
      */
     @ConsoleExperimentalApi
-    suspend fun autoLogin() {
-        if (Config.botId != null && Config.botPwd != null)
-            thisBot.alsoLogin()
+    suspend fun  autoLogin() : Bot? {
+        if(Config.botId != DefaultBotID && Config.botPwd != DefaultBotPwd) {
+            return MiraiConsole.addBot(Config.botId, Config.botPwd).alsoLogin()
+        }
+        return null
     }
 
     /**
@@ -129,6 +128,12 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+    /**
+     * 监听失物招领管理员群消息模块，可以在监听到新的消息后自动转发到失物招领群里边，其中：
+     * message.forEachContent为遍历所有消息内容[MessageContent]（有关消息元[MessageMetadata]与消息内容[MessageContent]的区别与关系请见文档）
+     * 字符串处理将消息链[MessageChain]中的转发关键字符“#”删除后整体转发
+     * 若检测到#recall关键字，则撤回回复消息[QuoteReply]的消息源[MessageSource]所转发到失物招领群的消息 （见[msgRecall]）
+     */
 
     @ConsoleExperimentalApi
     private fun replyTempMsg() {
@@ -198,6 +203,7 @@ object PluginMain : KotlinPlugin(
         }
     }
 
+
     /**
      *监听撤回消息（用于两分钟以内的消息）
      */
@@ -254,18 +260,17 @@ object PluginMain : KotlinPlugin(
      * 每日清理消息回执[MessageReceipt]以及劳模统计
      */
     @ConsoleExperimentalApi
-    private fun timeAction() {
-        launch {
+    private suspend fun timeAction(bot : Bot) {
             while (true) {
                 if (date == SimpleDateFormat("yyyy-MM-dd").format((Date()))) {
                     delay(600000L)
                     continue
                 }
                 date = SimpleDateFormat("yyyy-MM-dd").format(Date())
-                thisBot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
+                bot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
                 delay(10000L)
                 cacheMessage.clear()
-                thisBot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
+                bot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
                 delay(4000L)
                 val tot = mutableMapOf<Long, Int>()
                 var flag = 0
@@ -279,16 +284,15 @@ object PluginMain : KotlinPlugin(
                     }
 
                 }
-                thisBot.getGroup(Config.originGroup).sendMessage(
+                bot.getGroup(Config.originGroup).sendMessage(
                     "今日的劳模是:"
                 )
                 for (it in tot) {
-                    val sender = thisBot.getFriend(it.key)
-                    thisBot.getGroup(Config.originGroup).sendMessage("${sender.nameCardOrNick}, 条数共${it.value}条")
+                    val sender = bot.getFriend(it.key)
+                    bot.getGroup(Config.originGroup).sendMessage("${sender.nameCardOrNick}, 条数共${it.value}条")
                 }
                 Data.MessageCnt.clear()
             }
-        }
     }
 }
 
@@ -316,7 +320,7 @@ object Config : AutoSavePluginConfig("Groups") {
     /**
      * 机器人密码
      */
-    var botPwd: String by value<Long>()
+    var botPwd: String by value<String>()
 }
 
 object Data : AutoSavePluginData("bot") {
