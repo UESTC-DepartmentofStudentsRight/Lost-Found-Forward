@@ -160,6 +160,13 @@ object PluginMain : KotlinPlugin(
                                         "正在为同学接入管理员，请稍后"
                                     )
                                     bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
+                                    PluginMain.logger.info(
+                                        "本消息来自于${group.name}, 同学的QQ号为${sender.id}，管理员为${
+                                            bot.getFriend(
+                                                Mem
+                                            ).nameCardOrNick
+                                        }"
+                                    )
                                     bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
                                     bot.getFriend(Mem).sendMessage(message)
                                     sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
@@ -190,7 +197,8 @@ object PluginMain : KotlinPlugin(
                         Data.messagecontact.remove(sender.id)
                         return@always
                     }
-                    receiver!!.sendMessage(message)
+                    PluginMain.logger.info("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id).nameCardOrNick}")
+                    receiver.sendMessage(message)
                 }
             }
         }
@@ -203,6 +211,7 @@ object PluginMain : KotlinPlugin(
         subscribeAlways<MessageRecallEvent.GroupRecall> {
             if (authorId in Config.senderid && group.id == Config.originGroup && Data.MessageCnt[authorId] != null) {
                 PluginMain.logger.info("准备撤回群内消息！")
+                bot.getGroup(Config.originGroup).sendMessage("失物招领已撤回")
                 Data.MessageCnt[authorId]!!.remove(messageId)
                 msgRecall(messageId)
             }
