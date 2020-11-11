@@ -135,9 +135,8 @@ object PluginMain : KotlinPlugin(
      * 若检测到#recall关键字，则撤回回复消息[QuoteReply]的消息源[MessageSource]所转发到失物招领群的消息 （见[msgRecall]）
      */
 
-    @ConsoleExperimentalApi
     private fun replyTempMsg() {
-        subscribeTempMessages() {
+        subscribeTempMessages {
             always {
                 if (group.id in Config.groups) {
                     logger.verbose("接收到了一个临时会话")
