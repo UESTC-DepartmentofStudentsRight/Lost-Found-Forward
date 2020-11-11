@@ -68,7 +68,7 @@ object PluginMain : KotlinPlugin(
 
     /**
      *自动登录模块
-     *在[onEnable]时调用，可以自动登录机器人
+     *在[onEnable]时调用，可以自动登录机器人（修改后）
      */
     @ConsoleExperimentalApi
     suspend fun  autoLogin() : Bot? {
