@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "org.Reforward"
-version = "0.15.2"
+version = "0.15.3"
 
 dependencies {
     val autoService = "1.0-rc7"

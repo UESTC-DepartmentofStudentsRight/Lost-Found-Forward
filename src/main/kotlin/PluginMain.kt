@@ -46,7 +46,6 @@ object PluginMain : KotlinPlugin(
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
 
-
     @ConsoleExperimentalApi
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
@@ -71,8 +70,8 @@ object PluginMain : KotlinPlugin(
      *在[onEnable]时调用，可以自动登录机器人（修改后）
      */
     @ConsoleExperimentalApi
-    suspend fun  autoLogin() : Bot? {
-        if(Config.botId != DefaultBotID && Config.botPwd != DefaultBotPwd) {
+    suspend fun autoLogin(): Bot? {
+        if (Config.botId != DefaultBotID && Config.botPwd != DefaultBotPwd) {
             return MiraiConsole.addBot(Config.botId, Config.botPwd).alsoLogin()
         }
         return null
@@ -138,44 +137,42 @@ object PluginMain : KotlinPlugin(
     private fun replyTempMsg() {
         subscribeTempMessages {
             always {
-                if (group.id in Config.groups) {
-                    logger.verbose("接收到了一个临时会话")
-                    val id: Long = sender.id
-                    if (id in Data.messagecontact.values) {
-                        for (iter in Data.messagecontact) {
-                            if (iter.value == id) {
-                                bot.getFriend(iter.key).sendMessage(message)
+                logger.verbose("接收到了一个临时会话")
+                val id: Long = sender.id
+                if (id in Data.messagecontact.values) {
+                    for (iter in Data.messagecontact) {
+                        if (iter.value == id) {
+                            bot.getFriend(iter.key).sendMessage(message)
+                        }
+                    }
+                } else {
+                    var flag = true
+                    val newOrderSender =
+                        Collections.synchronizedList(Config.senderid.sortedBy { Data.MessageCnt[it]?.size ?: 0 })
+                    while (flag) {
+                        for (Mem in newOrderSender) {
+                            if (Data.messagecontact[Mem] == null) {
+                                sender.sendMessage(
+                                    "正在为同学接入管理员，请稍后"
+                                )
+                                Data.messagecontact[Mem] = id
+                                bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
+                                PluginMain.logger.info(
+                                    "本消息来自于${group.name}, 同学的QQ号为${sender.id}，管理员为${
+                                        bot.getFriend(
+                                            Mem
+                                        ).nameCardOrNick
+                                    }"
+                                )
+                                bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
+                                bot.getFriend(Mem).sendMessage(message)
+                                sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
+                                flag = false
+                                break
                             }
                         }
-                    } else {
-                        var flag = true
-                        val newOrderSender =
-                            Collections.synchronizedList(Config.senderid.sortedBy { Data.MessageCnt[it]?.size ?: 0 })
-                        while (flag) {
-                            for (Mem in newOrderSender) {
-                                if (Data.messagecontact[Mem] == null) {
-                                    sender.sendMessage(
-                                        "正在为同学接入管理员，请稍后"
-                                    )
-                                    bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
-                                    PluginMain.logger.info(
-                                        "本消息来自于${group.name}, 同学的QQ号为${sender.id}，管理员为${
-                                            bot.getFriend(
-                                                Mem
-                                            ).nameCardOrNick
-                                        }"
-                                    )
-                                    bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
-                                    bot.getFriend(Mem).sendMessage(message)
-                                    sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
-                                    Data.messagecontact[Mem] = id
-                                    flag = false
-                                    break
-                                }
-                            }
-                            if (flag)
-                                delay(3000L)
-                        }
+                        if (flag)
+                            delay(3000L)
                     }
                 }
             }
@@ -259,39 +256,39 @@ object PluginMain : KotlinPlugin(
      * 每日清理消息回执[MessageReceipt]以及劳模统计
      */
     @ConsoleExperimentalApi
-    private suspend fun timeAction(bot : Bot) {
-            while (true) {
-                if (date == SimpleDateFormat("yyyy-MM-dd").format((Date()))) {
-                    delay(600000L)
-                    continue
-                }
-                date = SimpleDateFormat("yyyy-MM-dd").format(Date())
-                bot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
-                delay(10000L)
-                cacheMessage.clear()
-                bot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
-                delay(4000L)
-                val tot = mutableMapOf<Long, Int>()
-                var flag = 0
-                for (it in Data.MessageCnt) {
-                    if (it.value.size > flag) {
-                        flag = it.value.size
-                        tot.clear()
-                        tot[it.key] = it.value.size
-                    } else if (it.value.size == flag) {
-                        tot[it.key] = it.value.size
-                    }
-
-                }
-                bot.getGroup(Config.originGroup).sendMessage(
-                    "今日的劳模是:"
-                )
-                for (it in tot) {
-                    val sender = bot.getFriend(it.key)
-                    bot.getGroup(Config.originGroup).sendMessage("${sender.nameCardOrNick}, 条数共${it.value}条")
-                }
-                Data.MessageCnt.clear()
+    private suspend fun timeAction(bot: Bot) {
+        while (true) {
+            if (date == SimpleDateFormat("yyyy-MM-dd").format((Date()))) {
+                delay(600000L)
+                continue
             }
+            date = SimpleDateFormat("yyyy-MM-dd").format(Date())
+            bot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
+            delay(10000L)
+            cacheMessage.clear()
+            bot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
+            delay(4000L)
+            val tot = mutableMapOf<Long, Int>()
+            var flag = 0
+            for (it in Data.MessageCnt) {
+                if (it.value.size > flag) {
+                    flag = it.value.size
+                    tot.clear()
+                    tot[it.key] = it.value.size
+                } else if (it.value.size == flag) {
+                    tot[it.key] = it.value.size
+                }
+
+            }
+            bot.getGroup(Config.originGroup).sendMessage(
+                "今日的劳模是:"
+            )
+            for (it in tot) {
+                val sender = bot.getFriend(it.key)
+                bot.getGroup(Config.originGroup).sendMessage("${sender.nameCardOrNick}, 条数共${it.value}条")
+            }
+            Data.MessageCnt.clear()
+        }
     }
 }
 
