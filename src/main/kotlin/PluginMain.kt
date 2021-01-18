@@ -22,14 +22,13 @@ import net.mamoe.mirai.event.*
 import net.mamoe.mirai.event.events.MessageRecallEvent
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.*
-import net.mamoe.mirai.message.recall
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 
-val PluginID = "org.Reforward.mirai-plugin"
+val PluginID = "org.Reforward.mirai.plugin"
 val PluginVersion = "0.15.0"
 val DefaultBotID = 0L
 val DefaultBotPwd = ""
@@ -39,10 +38,11 @@ val DefaultBotPwd = ""
 object PluginMain : KotlinPlugin(
     JvmPluginDescription(
         id = PluginID,
+        name = "lost&found",
         version = PluginVersion
     )
 ) {
-    private var cacheMessage = Collections.synchronizedMap(mutableMapOf<Int, MutableSet<MessageReceipt<Group>>>())
+    private var cacheMessage = Collections.synchronizedMap(mutableMapOf<IntArray, MutableSet<MessageReceipt<Group>>>())
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
 
@@ -85,7 +85,7 @@ object PluginMain : KotlinPlugin(
      */
 
     private fun forwardMsg() {
-        subscribeGroupMessages {
+        globalEventChannel().subscribeGroupMessages {
             always {
                 logger.verbose("接收到了新的消息！")
                 val id: Long = group.id
@@ -93,33 +93,34 @@ object PluginMain : KotlinPlugin(
                 if (id == originGroup && sender.id in Config.senderid) {
                     val messageChainBuilder = MessageChainBuilder()
                     if (message[QuoteReply] == null && message.contentToString()[0] == '#' && message.contentToString().length > 1) {
-                        message.forEachContent {
+                        message.forEach {
                             if (it is PlainText) {
                                 messageChainBuilder.add(it.content.replaceFirst("#".toRegex(), ""))
-                                return@forEachContent
+                                return@forEach
                             }
                             messageChainBuilder.add(it)
                         }
-                        send(messageChainBuilder.asMessageChain(), bot, message.id)
+                        send(messageChainBuilder.asMessageChain(), bot, message.ids)
                         if (Data.MessageCnt[sender.id] == null) {
                             Data.MessageCnt[sender.id] = mutableSetOf()
                         }
-                        Data.MessageCnt[sender.id]!!.add(message.id)
+                        Data.MessageCnt[sender.id]!!.add(message.ids)
                         logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
-                        bot.getGroup(originGroup).sendMessage("失物招领已转发！")
+                        bot.getGroup(originGroup)?.sendMessage("失物招领已转发！")
                         return@always
                     } else if (message[QuoteReply] != null && Pattern.matches(
                             ".*#recall.*",
-                            message[PlainText].toString()
+                            message.findIsInstance<PlainText>().toString()
                         )
                     ) {
+                        logger.info("开始处理撤回！")
                         val cnt = Data.MessageCnt[sender.id]
                         //如果不是本人发送的，则不处理
-                        cnt?.contains(message[QuoteReply]!!.source.id) ?: return@always
-                        val msgID = message[QuoteReply]!!.source.id
+                        cnt?.contains(message[QuoteReply]!!.source.ids) ?: return@always
+                        val msgID = message[QuoteReply]!!.source.ids
                         msgRecall(msgID)
-                        Data.MessageCnt[sender.id]!!.remove(message.id)
-                        bot.getGroup(originGroup).sendMessage("失物招领已撤回")
+                        Data.MessageCnt[sender.id]!!.remove(message.ids)
+                        bot.getGroup(originGroup)?.sendMessage("失物招领已撤回")
                         logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                     }
                 }
@@ -135,14 +136,14 @@ object PluginMain : KotlinPlugin(
      */
 
     private fun replyTempMsg() {
-        subscribeTempMessages {
+        globalEventChannel().subscribeGroupTempMessages {
             always {
                 logger.verbose("接收到了一个临时会话")
                 val id: Long = sender.id
                 if (id in Data.messagecontact.values) {
                     for (iter in Data.messagecontact) {
                         if (iter.value == id) {
-                            bot.getFriend(iter.key).sendMessage(message)
+                            bot.getFriend(iter.key)?.sendMessage(message)
                         }
                     }
                 } else {
@@ -156,16 +157,16 @@ object PluginMain : KotlinPlugin(
                                     "正在为同学接入管理员，请稍后"
                                 )
                                 Data.messagecontact[Mem] = id
-                                bot.getFriend(Mem).sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
+                                bot.getFriend(Mem)?.sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
                                 PluginMain.logger.info(
                                     "本消息来自于${group.name}, 同学的QQ号为${sender.id}，管理员为${
                                         bot.getFriend(
                                             Mem
-                                        ).nameCardOrNick
+                                        )?.nameCardOrNick
                                     }"
                                 )
-                                bot.getFriend(Mem).sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
-                                bot.getFriend(Mem).sendMessage(message)
+                                bot.getFriend(Mem)?.sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
+                                bot.getFriend(Mem)?.sendMessage(message)
                                 sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
                                 flag = false
                                 break
@@ -181,18 +182,18 @@ object PluginMain : KotlinPlugin(
          * 自动转发管理员回复的临时消息内容，文档撰写ing
          */
 
-        subscribeFriendMessages {
+        globalEventChannel().subscribeFriendMessages {
             always {
                 if (sender.id in Config.senderid && Data.messagecontact[sender.id] != null) {
                     val receiver = bot.groups.asSequence().flatMap { it.members.asSequence() }
                         .firstOrNull { it.id == Data.messagecontact[sender.id] }
                     if (message.contentToString() == "#stop") {
-                        bot.getFriend(sender.id).sendMessage("已经结束此对话，可以接入下一个同学的失物招领！")
+                        bot.getFriend(sender.id)?.sendMessage("已经结束此对话，可以接入下一个同学的失物招领！")
                         receiver?.sendMessage("管理员已经断开会话，如果有需要请继续发消息，会为同学转接新的管理员！")
                         Data.messagecontact.remove(sender.id)
                         return@always
                     }
-                    logger.info("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id).nameCardOrNick}")
+                    logger.info("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id)?.nameCardOrNick}")
                     receiver.sendMessage(message)
                 }
             }
@@ -204,11 +205,11 @@ object PluginMain : KotlinPlugin(
      *监听撤回消息（用于两分钟以内的消息）
      */
     private fun SubcribeRecall() {
-        subscribeAlways<MessageRecallEvent.GroupRecall> {
+         globalEventChannel().subscribeAlways<MessageRecallEvent.GroupRecall> {
             if (authorId in Config.senderid && group.id == Config.originGroup && Data.MessageCnt[authorId] != null) {
                 PluginMain.logger.info("准备撤回群内消息！")
-                Data.MessageCnt[authorId]!!.remove(messageId)
-                msgRecall(messageId)
+                Data.MessageCnt[authorId]!!.remove(messageIds)
+                msgRecall(messageIds)
             }
         }
     }
@@ -217,17 +218,17 @@ object PluginMain : KotlinPlugin(
      * 将记录在[cacheMessage]内的消息回执[MessageReceipt]逐个执行[MessageReceipt.recall]，
      * 从而撤回所有失物招领群内的本条失物招领
      */
-    private suspend fun msgRecall(messageID: Int) {
-        var recallmessage = cacheMessage[messageID]
+    private suspend fun msgRecall(messageIDs: IntArray) {
+        var recallmessage = cacheMessage[messageIDs]
         while (recallmessage == null || recallmessage.size != Config.groups.size) {
             delay(1000L)
-            recallmessage = cacheMessage[messageID]
+            recallmessage = cacheMessage[messageIDs]
         }
         for (msg in recallmessage) {
             launch {
                 val time: Long = (2000L..15000L).random()
-                delay(time)
-                msg.recall()
+                logger.info("撤回消息数+1")
+                msg.recallIn(time)
             }
         }
     }
@@ -235,7 +236,7 @@ object PluginMain : KotlinPlugin(
     /**
      * 将失物招领由管理员群[Config.originGroup]转发到失物招领群[Config.groups]内
      */
-    private fun send(messagechain: MessageChain, bot: Bot, messageID: Int) {
+    private fun send(messagechain: MessageChain, bot: Bot, messageIDs: IntArray) {
         val groups = Config.groups
         val cnt = AtomicInteger(0)
         val cacheReceipt = Collections.synchronizedSet(mutableSetOf<MessageReceipt<Group>>())
@@ -244,9 +245,9 @@ object PluginMain : KotlinPlugin(
                 val time: Long = (2000L..15000L).random()
                 delay(time)
                 cnt.incrementAndGet()
-                cacheReceipt.add(bot.getGroup(id).sendMessage(messagechain))
+                cacheReceipt.add(bot.getGroup(id)?.sendMessage(messagechain))
                 if (cnt.toInt() == Config.groups.size) {
-                    cacheMessage[messageID] = cacheReceipt
+                    cacheMessage[messageIDs] = cacheReceipt
                 }
             }
         }
@@ -263,10 +264,10 @@ object PluginMain : KotlinPlugin(
                 continue
             }
             date = SimpleDateFormat("yyyy-MM-dd").format(Date())
-            bot.getGroup(Config.originGroup).sendMessage("将开始清理撤回列表以及统计劳模")
+            bot.getGroup(Config.originGroup)?.sendMessage("将开始清理撤回列表以及统计劳模")
             delay(10000L)
             cacheMessage.clear()
-            bot.getGroup(Config.originGroup).sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
+            bot.getGroup(Config.originGroup)?.sendMessage("撤回列表清理完毕,小窝将无法撤回之前的消息")
             delay(4000L)
             val tot = mutableMapOf<Long, Int>()
             var flag = 0
@@ -280,12 +281,12 @@ object PluginMain : KotlinPlugin(
                 }
 
             }
-            bot.getGroup(Config.originGroup).sendMessage(
+            bot.getGroup(Config.originGroup)?.sendMessage(
                 "今日的劳模是:"
             )
             for (it in tot) {
                 val sender = bot.getFriend(it.key)
-                bot.getGroup(Config.originGroup).sendMessage("${sender.nameCardOrNick}, 条数共${it.value}条")
+                bot.getGroup(Config.originGroup)?.sendMessage("${sender?.nameCardOrNick}, 条数共${it.value}条")
             }
             Data.MessageCnt.clear()
         }
@@ -323,7 +324,7 @@ object Data : AutoSavePluginData("bot") {
     /**
      * 转发的失物招领条数[MessageCnt]
      */
-    var MessageCnt by value(mutableMapOf<Long, MutableSet<Int>>())
+    var MessageCnt by value(mutableMapOf<Long, MutableSet<IntArray>>())
 
     /**
      * 失物招领对话记录[messagecontact]

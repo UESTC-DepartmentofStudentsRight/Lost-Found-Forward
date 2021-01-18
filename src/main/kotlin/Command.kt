@@ -65,9 +65,9 @@ object DelSenderId : SimpleCommand(
             PluginMain.logger.error("bot不存在")
         } else {
             if (!Config.senderid.remove(Id)) {
-                PluginMain.logger.error("删除小窝${tempBot.getGroup(Config.originGroup).get(Id).nameCardOrNick}的权限失败")
+                PluginMain.logger.error("删除小窝${tempBot.getGroup(Config.originGroup)?.get(Id)?.nameCardOrNick}的权限失败")
             } else {
-                PluginMain.logger.info("删除小窝${tempBot.getGroup(Config.originGroup).get(Id).nameCardOrNick}的权限成功")
+                PluginMain.logger.info("删除小窝${tempBot.getGroup(Config.originGroup)?.get(Id)?.nameCardOrNick}的权限成功")
             }
         }
 
@@ -97,7 +97,7 @@ object ShowAllSenderId : SimpleCommand(
         } else {
             var flag = true
             for (i in Config.senderid) {
-                PluginMain.logger.info("${tempBot.getGroup(Config.originGroup).get(i).nameCardOrNick}拥有权限")
+                PluginMain.logger.info("${tempBot.getGroup(Config.originGroup)?.get(i)?.nameCardOrNick}拥有权限")
                 flag = false
             }
             if (flag) PluginMain.logger.info("当前没有小窝拥有权限")
@@ -160,7 +160,7 @@ object ShowAllGroup : SimpleCommand(
                 PluginMain.logger.info("群组列表为空")
             } else {
                 for (i in Config.groups) {
-                    PluginMain.logger.info("群名:${tempBot.getGroup(i).name},群号:${i}")
+                    PluginMain.logger.info("群名:${tempBot.getGroup(i)?.name},群号:${i}")
                 }
             }
         }
