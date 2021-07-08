@@ -7,8 +7,7 @@ import com.google.auto.service.AutoService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
-import net.mamoe.mirai.alsoLogin
-import net.mamoe.mirai.console.MiraiConsole
+import net.mamoe.mirai.BotFactory
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.utils.info
@@ -22,16 +21,18 @@ import net.mamoe.mirai.event.*
 import net.mamoe.mirai.event.events.MessageRecallEvent
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.*
+import net.mamoe.mirai.utils.BotConfiguration
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 
-val PluginID = "org.Reforward.mirai.plugin"
-val PluginVersion = "0.15.0"
-val DefaultBotID = 0L
-val DefaultBotPwd = ""
+const val PluginID = "org.Reforward.mirai.plugin"
+const val PluginVersion = "0.15.0"
+val bot = BotFactory.newBot(Config.botId, Config.botPwd) {
+    protocol = BotConfiguration.MiraiProtocol.ANDROID_WATCH
+}
 
 
 @AutoService(KotlinPlugin::class)
@@ -71,9 +72,7 @@ object PluginMain : KotlinPlugin(
      */
     @ConsoleExperimentalApi
     suspend fun autoLogin(): Bot? {
-        if (Config.botId != DefaultBotID && Config.botPwd != DefaultBotPwd) {
-            return MiraiConsole.addBot(Config.botId, Config.botPwd).alsoLogin()
-        }
+        bot.login()
         return null
     }
 
