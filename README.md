@@ -1,2 +1,9 @@
-# Mirai-Reforward 
-这是一个MiraiFoward在console 1.0 版本下的重构版本，正在逐步实现功能
+# 电子科技大学校学生会权益部开发  Lost&Found
+
+## 1.简介
+    本插件主要用于实物照管理群的管理，包含转发，撤回等功能
+
+## 2.使用方法
+    在mirai中运行 请参见：[mirai](https://github.com/mamoe/mirai "mirai项目")
+## 2.特别声明
+    本项目仅供学习交流使用，请勿滥用，一切使用带来的后果与本项目组无关。
