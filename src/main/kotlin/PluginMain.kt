@@ -18,6 +18,7 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Group
 import net.mamoe.mirai.contact.nameCardOrNick
 import net.mamoe.mirai.event.*
+import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.MessageRecallEvent
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.*
@@ -28,12 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 
-const val PluginID = "org.Reforward.mirai.plugin"
-const val PluginVersion = "0.15.0"
+const val PluginID = "org.Forward.mirai.plugin"
+const val PluginVersion = "1.0.0"
 val bot = BotFactory.newBot(Config.botId, Config.botPwd) {
     protocol = BotConfiguration.MiraiProtocol.ANDROID_WATCH
 }
-
 
 @AutoService(KotlinPlugin::class)
 object PluginMain : KotlinPlugin(
@@ -52,12 +52,12 @@ object PluginMain : KotlinPlugin(
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Config.reload()
         CommandRegister.commandRegister()
-        forwardMsg()
-        replyTempMsg()
-        SubcribeRecall()
         PluginMain.launch {
             autoLogin()?.let { timeAction(it) }
         }
+        forwardMsg()
+        replyTempMsg()
+        subscribeRecall()
     }
 
     override fun onDisable() {
@@ -84,9 +84,9 @@ object PluginMain : KotlinPlugin(
      */
 
     private fun forwardMsg() {
-        globalEventChannel().subscribeGroupMessages {
+        bot.eventChannel.subscribeGroupMessages {
             always {
-                logger.verbose("接收到了新的消息！")
+                logger.debug("接收到了新的消息！")
                 val id: Long = group.id
                 val originGroup: Long = Config.originGroup
                 if (id == originGroup && sender.id in Config.senderid) {
@@ -104,7 +104,7 @@ object PluginMain : KotlinPlugin(
                             Data.MessageCnt[sender.id] = mutableSetOf()
                         }
                         Data.MessageCnt[sender.id]!!.add(message.ids)
-                        logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
+                        logger.debug("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                         bot.getGroup(originGroup)?.sendMessage("失物招领已转发！")
                         return@always
                     } else if (message[QuoteReply] != null && Pattern.matches(
@@ -112,7 +112,7 @@ object PluginMain : KotlinPlugin(
                             message.findIsInstance<PlainText>().toString()
                         )
                     ) {
-                        logger.info("开始处理撤回！")
+                        logger.debug("开始处理撤回！")
                         val cnt = Data.MessageCnt[sender.id]
                         //如果不是本人发送的，则不处理
                         cnt?.contains(message[QuoteReply]!!.source.ids) ?: return@always
@@ -120,7 +120,7 @@ object PluginMain : KotlinPlugin(
                         msgRecall(msgID)
                         Data.MessageCnt[sender.id]!!.remove(message.ids)
                         bot.getGroup(originGroup)?.sendMessage("失物招领已撤回")
-                        logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
+                        logger.debug("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                     }
                 }
             }
@@ -135,9 +135,9 @@ object PluginMain : KotlinPlugin(
      */
 
     private fun replyTempMsg() {
-        globalEventChannel().subscribeGroupTempMessages {
+        bot.eventChannel.subscribeGroupTempMessages {
             always {
-                logger.verbose("接收到了一个临时会话")
+                logger.debug("接收到了一个临时会话")
                 val id: Long = sender.id
                 if (id in Data.messagecontact.values) {
                     for (iter in Data.messagecontact) {
@@ -157,7 +157,7 @@ object PluginMain : KotlinPlugin(
                                 )
                                 Data.messagecontact[Mem] = id
                                 bot.getFriend(Mem)?.sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
-                                PluginMain.logger.info(
+                                PluginMain.logger.debug(
                                     "本消息来自于${group.name}, 同学的QQ号为${sender.id}，管理员为${
                                         bot.getFriend(
                                             Mem
@@ -181,7 +181,7 @@ object PluginMain : KotlinPlugin(
          * 自动转发管理员回复的临时消息内容，文档撰写ing
          */
 
-        globalEventChannel().subscribeFriendMessages {
+        bot.eventChannel.subscribeFriendMessages {
             always {
                 if (sender.id in Config.senderid && Data.messagecontact[sender.id] != null) {
                     val receiver = bot.groups.asSequence().flatMap { it.members.asSequence() }
@@ -192,7 +192,7 @@ object PluginMain : KotlinPlugin(
                         Data.messagecontact.remove(sender.id)
                         return@always
                     }
-                    logger.info("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id)?.nameCardOrNick}")
+                    logger.debug("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id)?.nameCardOrNick}")
                     receiver.sendMessage(message)
                 }
             }
@@ -203,13 +203,18 @@ object PluginMain : KotlinPlugin(
     /**
      *监听撤回消息（用于两分钟以内的消息）
      */
-    private fun SubcribeRecall() {
-         globalEventChannel().subscribeAlways<MessageRecallEvent.GroupRecall> {
+    private fun subscribeRecall() {
+        bot.eventChannel.subscribeAlways<MessageRecallEvent.GroupRecall> {
+            logger.debug("监听到撤回事件")
             if (authorId in Config.senderid && group.id == Config.originGroup && Data.MessageCnt[authorId] != null) {
-                PluginMain.logger.info("准备撤回群内消息！")
+                logger.debug("准备撤回群内消息！")
                 Data.MessageCnt[authorId]!!.remove(messageIds)
                 msgRecall(messageIds)
             }
+        }
+
+        bot.eventChannel.subscribeAlways<GroupMessageEvent> {
+            logger.debug("监听到来自${group.name}的消息, 发送人是${senderName}")
         }
     }
 
@@ -218,16 +223,26 @@ object PluginMain : KotlinPlugin(
      * 从而撤回所有失物招领群内的本条失物招领
      */
     private suspend fun msgRecall(messageIDs: IntArray) {
-        var recallmessage = cacheMessage[messageIDs]
-        while (recallmessage == null || recallmessage.size != Config.groups.size) {
-            delay(1000L)
-            recallmessage = cacheMessage[messageIDs]
+        var recallmessage = mutableSetOf<MessageReceipt<Group>>()
+        for(i in cacheMessage.keys){
+            if(Arrays.equals(i,messageIDs)){
+                while (recallmessage.size != Config.groups.size) {
+                    delay(1000L)
+                    recallmessage = cacheMessage.getValue(i)
+                }
+                break
+            }
         }
-        for (msg in recallmessage) {
-            launch {
-                val time: Long = (2000L..15000L).random()
-                logger.info("撤回消息数+1")
-                msg.recallIn(time)
+        if(recallmessage.isEmpty()){
+            logger.error("Value not found")
+        }
+        else {
+            for (msg in recallmessage) {
+                launch {
+                    val time: Long = (2000L..15000L).random()
+                    logger.debug("撤回消息数+1")
+                    msg.recallIn(time)
+                }
             }
         }
     }
@@ -296,27 +311,27 @@ object Config : AutoSavePluginConfig("Groups") {
     /**
      * 失物招领管理员群[groups]
      */
-    var groups: MutableSet<Long> by value(mutableSetOf<Long>())
+    var groups by value(mutableSetOf<Long>())
 
     /**
      * 失物招领管理员[senderid]
      */
-    var senderid: MutableSet<Long> by value(mutableSetOf<Long>())
+    var senderid by value(mutableSetOf<Long>())
 
     /**
      * 失物招领管理员群[originGroup]
      */
-    var originGroup: Long by value<Long>()
+    var originGroup by value<Long>()
 
     /**
      * 机器人QQ号
      */
-    var botId: Long by value<Long>()
+    var botId by value<Long>()
 
     /**
      * 机器人密码
      */
-    var botPwd: String by value<String>()
+    var botPwd by value<String>()
 }
 
 object Data : AutoSavePluginData("bot") {
