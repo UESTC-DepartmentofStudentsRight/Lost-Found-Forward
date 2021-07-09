@@ -3,7 +3,7 @@ plugins {
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
     kotlin("kapt") version kotlinVersion
-    id("net.mamoe.mirai-console") version "2.6.7"
+    id("net.mamoe.mirai-console") version "2.7-M2"
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 

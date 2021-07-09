@@ -30,9 +30,9 @@ import java.util.regex.Pattern
 
 
 const val PluginID = "org.Forward.mirai.plugin"
-const val PluginVersion = "1.0.0"
+const val PluginVersion = "1.0.1"
 val bot = BotFactory.newBot(Config.botId, Config.botPwd) {
-    protocol = BotConfiguration.MiraiProtocol.ANDROID_WATCH
+    protocol = BotConfiguration.MiraiProtocol.ANDROID_PAD
 }
 
 @AutoService(KotlinPlugin::class)
@@ -224,25 +224,22 @@ object PluginMain : KotlinPlugin(
      */
     private suspend fun msgRecall(messageIDs: IntArray) {
         var recallmessage = mutableSetOf<MessageReceipt<Group>>()
-        for(i in cacheMessage.keys){
-            if(Arrays.equals(i,messageIDs)){
-                while (recallmessage.size != Config.groups.size) {
-                    delay(1000L)
-                    recallmessage = cacheMessage.getValue(i)
+        while (recallmessage.isEmpty()) {
+            for (i in cacheMessage.keys) {
+                if (Arrays.equals(i, messageIDs)) {
+                    while (recallmessage.size != Config.groups.size) {
+                        delay(1000L)
+                        recallmessage = cacheMessage.getValue(i)
+                    }
+                    break
                 }
-                break
             }
         }
-        if(recallmessage.isEmpty()){
-            logger.error("Value not found")
-        }
-        else {
-            for (msg in recallmessage) {
-                launch {
-                    val time: Long = (2000L..15000L).random()
-                    logger.debug("撤回消息数+1")
-                    msg.recallIn(time)
-                }
+        for (msg in recallmessage) {
+            launch {
+                val time: Long = (2000L..15000L).random()
+                logger.debug("撤回消息数+1")
+                msg.recallIn(time)
             }
         }
     }
