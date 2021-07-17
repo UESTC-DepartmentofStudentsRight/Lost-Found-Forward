@@ -8,13 +8,12 @@ plugins {
 }
 
 group = "org.Reforward"
-version = "1.0.0"
+version = "1.0.4"
 
 dependencies {
     val autoService = "1.0-rc7"
     kapt("com.google.auto.service", "auto-service", autoService)
     compileOnly("com.google.auto.service", "auto-service-annotations", autoService)
-    runtimeOnly("org.slf4j","slf4j-simple","1.7.30")
 }
 
 repositories {

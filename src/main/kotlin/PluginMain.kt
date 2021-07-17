@@ -25,15 +25,19 @@ import net.mamoe.mirai.message.data.*
 import net.mamoe.mirai.utils.BotConfiguration
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.Arrays.equals
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Pattern
 
 
 const val PluginID = "org.Forward.mirai.plugin"
-const val PluginVersion = "1.0.1"
+const val PluginVersion = "1.0.3"
 val bot = BotFactory.newBot(Config.botId, Config.botPwd) {
     protocol = BotConfiguration.MiraiProtocol.ANDROID_PAD
 }
+
+
+
 
 @AutoService(KotlinPlugin::class)
 object PluginMain : KotlinPlugin(
@@ -46,14 +50,13 @@ object PluginMain : KotlinPlugin(
     private var cacheMessage = Collections.synchronizedMap(mutableMapOf<IntArray, MutableSet<MessageReceipt<Group>>>())
     private var date = SimpleDateFormat("yyyy-MM-dd").format(Date())
 
-
     @ConsoleExperimentalApi
     override fun onEnable() {
         logger.info { "由权益小窝开发组出品。你的全心，我的权益！" }
         Config.reload()
         CommandRegister.commandRegister()
         PluginMain.launch {
-            autoLogin()?.let { timeAction(it) }
+            autoLogin()
         }
         forwardMsg()
         replyTempMsg()
@@ -73,6 +76,7 @@ object PluginMain : KotlinPlugin(
     @ConsoleExperimentalApi
     suspend fun autoLogin(): Bot? {
         bot.login()
+        timeAction()
         return null
     }
 
@@ -120,7 +124,7 @@ object PluginMain : KotlinPlugin(
                         msgRecall(msgID)
                         Data.MessageCnt[sender.id]!!.remove(message.ids)
                         bot.getGroup(originGroup)?.sendMessage("失物招领已撤回")
-                        logger.debug("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
+                        logger.info("${sender.nameCardOrNick}的条数为${Data.MessageCnt[sender.id]!!.size}")
                     }
                 }
             }
@@ -192,7 +196,7 @@ object PluginMain : KotlinPlugin(
                         Data.messagecontact.remove(sender.id)
                         return@always
                     }
-                    logger.debug("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id)?.nameCardOrNick}")
+                    logger.info("同学的id为${receiver!!.id},管理员为${bot.getFriend(sender.id)?.nameCardOrNick}")
                     receiver.sendMessage(message)
                 }
             }
@@ -226,7 +230,7 @@ object PluginMain : KotlinPlugin(
         var recallmessage = mutableSetOf<MessageReceipt<Group>>()
         while (recallmessage.isEmpty()) {
             for (i in cacheMessage.keys) {
-                if (Arrays.equals(i, messageIDs)) {
+                if (equals(i, messageIDs)) {
                     while (recallmessage.size != Config.groups.size) {
                         delay(1000L)
                         recallmessage = cacheMessage.getValue(i)
@@ -238,7 +242,6 @@ object PluginMain : KotlinPlugin(
         for (msg in recallmessage) {
             launch {
                 val time: Long = (2000L..15000L).random()
-                logger.debug("撤回消息数+1")
                 msg.recallIn(time)
             }
         }
@@ -268,7 +271,7 @@ object PluginMain : KotlinPlugin(
      * 每日清理消息回执[MessageReceipt]以及劳模统计
      */
     @ConsoleExperimentalApi
-    private suspend fun timeAction(bot: Bot) {
+    private suspend fun timeAction() {
         while (true) {
             if (date == SimpleDateFormat("yyyy-MM-dd").format((Date()))) {
                 delay(600000L)
