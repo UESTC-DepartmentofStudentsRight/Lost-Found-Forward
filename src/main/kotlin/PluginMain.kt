@@ -31,7 +31,7 @@ import java.util.regex.Pattern
 
 
 const val PluginID = "org.Forward.mirai.plugin"
-const val PluginVersion = "1.0.3"
+const val PluginVersion = "1.0.5"
 val bot = BotFactory.newBot(Config.botId, Config.botPwd) {
     protocol = BotConfiguration.MiraiProtocol.ANDROID_PAD
 }
@@ -190,7 +190,10 @@ object PluginMain : KotlinPlugin(
                 if (sender.id in Config.senderid && Data.messagecontact[sender.id] != null) {
                     val receiver = bot.groups.asSequence().flatMap { it.members.asSequence() }
                         .firstOrNull { it.id == Data.messagecontact[sender.id] }
-                    if (message.contentToString() == "#stop") {
+                    if (Pattern.matches(
+                            ".*#stop.*",
+                            message.findIsInstance<PlainText>().toString())
+                    ){
                         bot.getFriend(sender.id)?.sendMessage("已经结束此对话，可以接入下一个同学的失物招领！")
                         receiver?.sendMessage("管理员已经断开会话，如果有需要请继续发消息，会为同学转接新的管理员！")
                         Data.messagecontact.remove(sender.id)

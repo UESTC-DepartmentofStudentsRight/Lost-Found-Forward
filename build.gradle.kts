@@ -3,7 +3,7 @@ plugins {
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
     kotlin("kapt") version kotlinVersion
-    id("net.mamoe.mirai-console") version "2.7-M2"
+    id("net.mamoe.mirai-console") version "2.7.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
@@ -19,7 +19,6 @@ dependencies {
 repositories {
     mavenLocal()
     mavenCentral()
-    jcenter()
     maven("https://dl.bintray.com/kotlin/kotlin-eap")
     maven { url = uri("https://dl.bintray.com/karlatemp/misc") }
 }
