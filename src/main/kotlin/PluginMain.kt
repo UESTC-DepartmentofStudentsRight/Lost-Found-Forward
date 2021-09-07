@@ -6,6 +6,8 @@ package org.Reforward.mirai.plugin
 import com.google.auto.service.AutoService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.BotFactory
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
@@ -31,7 +33,7 @@ import java.util.regex.Pattern
 
 
 const val PluginID = "org.Forward.mirai.plugin"
-const val PluginVersion = "1.0.5"
+const val PluginVersion = "1.0.6"
 val bot = BotFactory.newBot(Config.botId, Config.botPwd) {
     protocol = BotConfiguration.MiraiProtocol.ANDROID_PAD
 }
@@ -87,6 +89,8 @@ object PluginMain : KotlinPlugin(
      * 若检测到#recall关键字，则撤回回复消息[QuoteReply]的消息源[MessageSource]所转发到失物招领群的消息 （见[msgRecall]）
      */
 
+
+
     private fun forwardMsg() {
         bot.eventChannel.subscribeGroupMessages {
             always {
@@ -137,6 +141,7 @@ object PluginMain : KotlinPlugin(
      * 字符串处理将消息链[MessageChain]中的转发关键字符“#”删除后整体转发
      * 若检测到#recall关键字，则撤回回复消息[QuoteReply]的消息源[MessageSource]所转发到失物招领群的消息 （见[msgRecall]）
      */
+    private val mutex = Mutex()
 
     private fun replyTempMsg() {
         bot.eventChannel.subscribeGroupTempMessages {
@@ -150,34 +155,36 @@ object PluginMain : KotlinPlugin(
                         }
                     }
                 } else {
-                    var flag = true
-                    val newOrderSender =
-                        Collections.synchronizedList(Config.senderid.sortedBy { Data.MessageCnt[it]?.size ?: 0 })
-                    while (flag) {
-                        for (Mem in newOrderSender) {
-                            if (Data.messagecontact[Mem] == null) {
-                                sender.sendMessage(
-                                    "正在为同学接入管理员，请稍后"
-                                )
-                                Data.messagecontact[Mem] = id
-                                bot.getFriend(Mem)?.sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
-                                PluginMain.logger.debug(
-                                    "本消息来自于${group.name}, 同学的QQ号为${sender.id}，管理员为${
-                                        bot.getFriend(
-                                            Mem
-                                        )?.nameCardOrNick
-                                    }"
-                                )
-                                bot.getFriend(Mem)?.sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
-                                bot.getFriend(Mem)?.sendMessage(message)
-                                sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
-                                flag = false
-                                break
-                            }
-                        }
-                        if (flag)
-                            delay(3000L)
-                    }
+                   mutex.withLock {
+                       var flag = true
+                       val newOrderSender =
+                           Collections.synchronizedList(Config.senderid.sortedBy { Data.MessageCnt[it]?.size ?: 0 })
+                       while (flag) {
+                           for (Mem in newOrderSender) {
+                               if (Data.messagecontact[Mem] == null) {
+                                   sender.sendMessage(
+                                       "正在为同学接入管理员，请稍后"
+                                   )
+                                   Data.messagecontact[Mem] = id
+                                   bot.getFriend(Mem)?.sendMessage("本消息来自于${group.name}, 同学的QQ号为${sender.id}")
+                                   PluginMain.logger.debug(
+                                       "本消息来自于${group.name}, 同学的QQ号为${sender.id}，管理员为${
+                                           bot.getFriend(
+                                               Mem
+                                           )?.nameCardOrNick
+                                       }"
+                                   )
+                                   bot.getFriend(Mem)?.sendMessage("这是一个新的对话，结束时请输入英文的 #stop 结束")
+                                   bot.getFriend(Mem)?.sendMessage(message)
+                                   sender.sendMessage("已与管理员建立对话，请同学继续发送消息")
+                                   flag = false
+                                   break
+                               }
+                           }
+                           if (flag)
+                               delay(3000L)
+                       }
+                   }
                 }
             }
         }
@@ -347,6 +354,5 @@ object Data : AutoSavePluginData("bot") {
      * 失物招领对话记录[messagecontact]
      */
     var messagecontact by value(mutableMapOf<Long, Long>())
-
 
 }
