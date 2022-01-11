@@ -342,6 +342,14 @@ object Config : AutoSavePluginConfig("Groups") {
      * 机器人密码
      */
     var botPwd by value<String>()
+
+
+
+    var url by value<String>()
+
+    var user by value<String>()
+
+    var password by value<String>()
 }
 
 object Data : AutoSavePluginData("bot") {

@@ -14,7 +14,9 @@ dependencies {
     val autoService = "1.0-rc7"
     kapt("com.google.auto.service", "auto-service", autoService)
     compileOnly("com.google.auto.service", "auto-service-annotations", autoService)
+    implementation("com.oracle.database.jdbc:ojdbc11:21.4.0.0.1")
 }
+
 
 repositories {
     mavenLocal()
